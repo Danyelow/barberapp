@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title BarberApp - frontend_prueba
+title BarberApp - frontend
 cd /d "%~dp0"
 
 where node >nul 2>nul
@@ -26,8 +26,8 @@ if not exist "node_modules" (
 
 echo.
 echo  ===============================================
-echo   BarberApp - frontend de prueba
-echo   URL: http://localhost:5174
+echo   BarberApp - frontend
+echo   URL: http://localhost:5173
 echo   Deja esta ventana abierta mientras uses la app.
 echo   Para detener el servidor: Ctrl + C
 echo  ===============================================

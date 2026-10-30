@@ -1,63 +1,45 @@
-# BarberApp ✂️
+# BarberApp
 
-Monorepo de BarberApp: una aplicación web para gestionar una barbería, compuesta por una **API REST en Java (Spring Boot)** y una **SPA en React (Vite + TypeScript)**.
+Aplicación web para localizar barberías y reservar cita con un barbero. Monorepo con:
 
-## Estructura del monorepo
+- **`frontend/`**: PWA *mobile first* en React 19 + Vite + TypeScript + Tailwind CSS.
+- **`backend/`**: proyecto Django 6 + Django REST Framework con los modelos de barberías,
+  barberos, clientes y reservas.
+
+> **Estado actual:** el frontend funciona de forma autónoma con datos simulados en `localStorage`
+> y todavía no consume la API. Las barberías, barberos y servicios se gestionan desde el
+> Django Admin.
+
+## Estructura
 
 ```
-barberapp/
-├── backend/                 # API REST — Java 17 + Spring Boot 4
-│   ├── mvnw / mvnw.cmd      # Maven Wrapper (no necesitas Maven instalado)
-│   └── src/
-│       ├── main/java/com/barberapp/api
-│       │   ├── domain/      # Entidades JPA
-│       │   ├── repository/  # Repositorios Spring Data
-│       │   ├── dto/         # Objetos de entrada/salida
-│       │   └── controller/  # Controladores REST
-│       └── test/java/com/barberapp/api
-├── frontend/                # SPA — React 19 + Vite 8 + TypeScript
-│   └── src/
-│       ├── api/             # Cliente HTTP hacia la API
-│       └── ...
-├── docker-compose.yml       # PostgreSQL para desarrollo local
+BARBERAPP/
+├── backend/
+│   ├── barberapp/          # configuración del proyecto Django
+│   ├── barbers/            # BarberShop, Barber, HaircutType
+│   ├── clients/            # Client
+│   ├── reservations/       # Reservation
+│   ├── manage.py
+│   └── requirements.txt
+├── frontend/
+│   ├── public/             # favicon e iconos PWA
+│   ├── src/                # api, auth, components, pages, lib…
+│   ├── iniciar.bat         # arranca el frontend en Windows
+│   ├── parar.bat           # detiene el servidor del frontend
+│   └── vite.config.ts      # React + Tailwind + PWA + proxy /api → :8000
+├── docker-compose.yml      # PostgreSQL opcional para desarrollo
 └── README.md
 ```
 
 ## Requisitos
 
-| Herramienta | Versión mínima |
+| Herramienta | Versión |
 |---|---|
-| Java | 17 (JDK) |
-| Node.js | 20.19+ / 22.12+ |
-| Docker | opcional (solo para la base de datos) |
+| Node.js | 20.19+ o 22.12+ |
+| Python | 3.12+ (probado con 3.14) |
+| Docker | opcional (solo si quieres PostgreSQL) |
 
-Maven no hace falta instalarlo: el proyecto incluye el **Maven Wrapper** (`mvnw` / `mvnw.cmd`), que lo descarga automáticamente la primera vez.
-
-## Puesta en marcha
-
-### 1. Base de datos (PostgreSQL)
-
-```bash
-docker compose up -d db
-```
-
-Credenciales por defecto: `barberapp` / `barberapp` en el puerto `5432`.
-
-### 2. API (Spring Boot)
-
-```bash
-cd backend
-./mvnw spring-boot:run        # Linux/macOS
-.\mvnw.cmd spring-boot:run    # Windows
-```
-
-La API arranca en `http://localhost:8080`. Para comprobar que funciona:
-
-```bash
-curl http://localhost:8080/api/ping
-```
-
-### 3. SPA (React)
+## Frontend
 
 ```bash
 cd frontend
@@ -65,42 +47,60 @@ npm install
 npm run dev
 ```
 
-La SPA arranca en `http://localhost:5173`. En desarrollo, Vite redirige las llamadas a `/api/*` hacia `http://localhost:8080` (proxy configurado en `frontend/vite.config.ts`), así que no hay que configurar CORS.
+La app queda en <http://localhost:5173>. En Windows también puedes hacer doble clic en
+`frontend/iniciar.bat` (arranca Vite y abre el navegador) y usar `frontend/parar.bat` para
+detenerlo. El puerto está fijado con `strictPort`, así que si está ocupado el arranque falla
+en vez de cambiar de puerto.
 
-## Endpoints de la API
+Cuentas de demostración:
 
-| Método | Ruta | Descripción |
+| Rol | Email | Contraseña |
 |---|---|---|
-| `GET` | `/api/ping` | Comprobación de salud del servicio |
-| `GET` | `/api/barbers` | Lista los barberos |
-| `GET` | `/api/barbers/{id}` | Obtiene un barbero por id |
-| `POST` | `/api/barbers` | Crea un barbero `{"name": "...", "specialty": "..."}` |
+| Cliente | `cliente@barberapp.dev` | `123456` |
+| Barbero | `barbero@barberapp.dev` | `123456` |
+
+Para probar la PWA (service worker e instalación):
+
+```bash
+npm run build
+npm run preview
+```
+
+Más detalles en [`frontend/README.md`](frontend/README.md).
+
+## Backend
+
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate        # Windows
+# source .venv/bin/activate   # Linux/macOS
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver 8000
+```
+
+- Django Admin: <http://localhost:8000/admin/>
+- Base de datos por defecto: SQLite (`backend/db.sqlite3`).
+- `docker-compose.yml` levanta un PostgreSQL en el puerto `5432` si prefieres usarlo
+  (tendrás que configurar `DATABASES` en `backend/barberapp/settings.py`).
+- El proxy de Vite reenvía `/api/*` a `http://localhost:8000`, listo para cuando se conecte la API.
 
 ## Scripts útiles
 
-| Comando | Descripción |
-|---|---|
-| `docker compose up -d db` | Levanta PostgreSQL |
-| `.\mvnw.cmd test` (en `backend/`) | Ejecuta los tests de la API |
-| `.\mvnw.cmd package` (en `backend/`) | Genera el `.jar` en `backend/target/` |
-| `npm run dev` (en `frontend/`) | Servidor de desarrollo de Vite |
-| `npm run build` (en `frontend/`) | Build de producción en `frontend/dist/` |
+| Comando | Dónde | Descripción |
+|---|---|---|
+| `npm run dev` | `frontend/` | Servidor de desarrollo con HMR (5173) |
+| `npm run build` | `frontend/` | Typecheck + build de producción + service worker |
+| `npm run preview` | `frontend/` | Sirve el build para probar la PWA |
+| `python manage.py runserver` | `backend/` | API/Admin en el puerto 8000 |
+| `python manage.py migrate` | `backend/` | Aplica las migraciones |
+| `docker compose up -d db` | raíz | Levanta PostgreSQL (opcional) |
 
-## Configuración con variables de entorno
+## Siguientes pasos
 
-La API admite variables de entorno (con valores por defecto para desarrollo local):
-
-| Variable | Por defecto |
-|---|---|
-| `DB_URL` | `jdbc:postgresql://localhost:5432/barberapp` |
-| `DB_USERNAME` | `barberapp` |
-| `DB_PASSWORD` | `barberapp` |
-| `PORT` | `8080` |
-
-## Siguientes pasos sugeridos
-
-- Migraciones de esquema con **Flyway** (hoy se usa `ddl-auto: update` en desarrollo).
-- Autenticación/autorización (por ejemplo, Spring Security + JWT).
-- Tests de integración con **Testcontainers** (PostgreSQL real).
-- CI con GitHub Actions: `mvnw test` + `npm run build`.
-- Dockerfiles para `backend/` y `frontend/` ya incluidos para desplegar en producción.
+- Exponer los endpoints REST (barberías, barberos, disponibilidad y reservas) y sustituir
+  `frontend/src/api/mockApi.ts` por llamadas reales.
+- Autenticación contra el backend (hoy la sesión se guarda en el navegador).
+- Mover `SECRET_KEY`, `DEBUG` y `ALLOWED_HOSTS` a variables de entorno antes de desplegar.

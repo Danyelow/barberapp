@@ -3,7 +3,7 @@
 Aplicación web progresiva **mobile first** para localizar barberías, consultar servicios y reservar cita
 con el barbero que elijas. Incluye panel de agenda para barberos.
 
-Este directorio es el **frontend de prueba** del proyecto BarberApp: funciona de forma autónoma con una
+Este directorio es el **frontend** del proyecto BarberApp: funciona de forma autónoma con una
 capa de datos simulada (`localStorage`), por lo que no necesita backend para probarse.
 
 ## Stack
@@ -24,26 +24,26 @@ capa de datos simulada (`localStorage`), por lo que no necesita backend para pro
 ### Opción rápida (Windows)
 
 Doble clic en **`iniciar.bat`**: comprueba Node, instala dependencias si es la primera vez, arranca
-Vite y abre el navegador en <http://localhost:5174>. Deja la ventana abierta mientras uses la app.
+Vite y abre el navegador en <http://localhost:5173>. Deja la ventana abierta mientras uses la app.
 Para detenerlo, pulsa `Ctrl + C` en esa ventana o haz doble clic en **`parar.bat`**.
 
 ### Opción manual
 
 ```bash
-cd frontend_prueba
+cd frontend
 npm install
 npm run dev
 ```
 
-- App: <http://localhost:5174> (usa el 5174 para no chocar con `frontend/`).
-- Móvil en la misma red: `npm run dev -- --host` y abre `http://IP_DEL_PC:5174`.
+- App: <http://localhost:5173>.
+- Móvil en la misma red: `npm run dev -- --host` y abre `http://IP_DEL_PC:5173`.
 - Para probar la PWA en local: `npm run build && npm run preview`.
 
 > **Si el navegador dice «No se puede acceder a este sitio web / ERR_CONNECTION_REFUSED» en
-> `localhost:5174`**, el servidor de desarrollo no está arrancado: ejecuta `npm run dev` (o
+> `localhost:5173`**, el servidor de desarrollo no está arrancado: ejecuta `npm run dev` (o
 > `iniciar.bat`) y deja la terminal abierta. El servidor debe seguir en marcha mientras navegas.
-> El puerto está fijado con `strictPort`, así que si aparece «Port 5174 is already in use» hay otra
-> instancia abierta: ciérrala o ciérrala con `Ctrl + C` en su terminal.
+> El puerto está fijado con `strictPort`, así que si aparece «Port 5173 is already in use» hay otra
+> instancia abierta: ciérrala con `Ctrl + C` en su terminal.
 
 ## Cuentas de demostración
 
@@ -90,7 +90,7 @@ También puedes registrarte: la cuenta se guarda solo en tu navegador.
 ## Estructura
 
 ```
-frontend_prueba/
+frontend/
 ├── public/
 │   ├── favicon.svg
 │   └── icons/                  # iconos PWA (192, 512, maskable, apple-touch)
@@ -148,7 +148,7 @@ Para conectar la API real (Django + Django REST Framework) basta con sustituir l
 
 | Script | Acción |
 |---|---|
-| `npm run dev` | Desarrollo con HMR en el puerto 5174 |
+| `npm run dev` | Desarrollo con HMR en el puerto 5173 |
 | `npm run build` | Typecheck (`tsc -b`) + build de producción + service worker |
 | `npm run preview` | Sirve el build (ideal para probar la instalación PWA) |
 
