@@ -1,0 +1,39 @@
+# Python / Django
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+.eggs/
+*.egg-info/
+
+# Django
+/db.sqlite3
+*.sqlite3
+*.sqlite3-journal
+/media/
+/staticfiles/
+local_settings.py
+
+# Entorno (sí se sube .env.example)
+.env
+.env.*
+!.env.example
+
+# Tests y calidad
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Logs
+*.log
