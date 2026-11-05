@@ -17,6 +17,7 @@ import { useBookings } from '../store/BookingsContext'
 import { useToast } from '../ui/ToastContext'
 import { findBarbershop, findService } from '../data/barbershops'
 import { getSlots } from '../lib/availability'
+import { canRequestService, RESTRICTED_SERVICE_MESSAGE } from '../lib/services'
 import {
   durationLabel,
   formatPrice,
@@ -55,10 +56,24 @@ export function BookingPage() {
   const service = shop && serviceId ? findService(shop.id, serviceId) : undefined
   const barber = shop && barberId ? shop.barbers.find((item) => item.id === barberId) : undefined
   const days = useMemo(() => nextDays(14), [])
+  const availableServices = useMemo(
+    () => (shop ? shop.services.filter((item) => canRequestService(item, user)) : []),
+    [shop, user],
+  )
 
   useEffect(() => {
     setTime('')
   }, [barberId, serviceId, date])
+
+  // Si se llega por URL con un servicio restringido, no se permite continuar.
+  useEffect(() => {
+    if (!shop || !serviceId) return
+    const selected = findService(shop.id, serviceId)
+    if (selected && !canRequestService(selected, user)) {
+      setServiceId('')
+      setStep(0)
+    }
+  }, [shop, serviceId, user])
 
   const slots = useMemo(() => {
     if (!shop || !service || !barberId) return []
@@ -85,8 +100,8 @@ export function BookingPage() {
       <div className="mx-auto min-h-dvh max-w-md bg-stone-50 px-4 py-16">
         <EmptyState
           icon={<Scissors className="size-5" />}
-          title="Barbería no encontrada"
-          message="No pudimos cargar esta barbería. Vuelve al inicio y elige otra."
+          title="Peluquería no encontrada"
+          message="No pudimos cargar esta peluquería. Vuelve al inicio y elige otra."
           action={
             <Link to="/" className="text-sm font-semibold text-brand-700 underline underline-offset-4">
               Volver al inicio
@@ -98,7 +113,15 @@ export function BookingPage() {
   }
 
   const canContinue =
-    step === 0 ? Boolean(service) : step === 1 ? Boolean(barber) : step === 2 ? Boolean(time) : true
+    !service || !canRequestService(service, user)
+      ? false
+      : step === 0
+        ? true
+        : step === 1
+          ? Boolean(barber)
+          : step === 2
+            ? Boolean(time)
+            : true
 
   const goBack = () => {
     if (created) {
@@ -114,6 +137,10 @@ export function BookingPage() {
 
   const confirm = async () => {
     if (!service || !barber || !time || !user) return
+    if (!canRequestService(service, user)) {
+      toast(RESTRICTED_SERVICE_MESSAGE, 'error')
+      return
+    }
     setSaving(true)
     try {
       const booking = await createBooking({
@@ -205,7 +232,7 @@ export function BookingPage() {
                 </h2>
                 <p className="mt-1 max-w-xs text-sm text-ink-500">
                   Tu cita en <strong className="text-ink-700">{shop.name}</strong> está pendiente de
-                  confirmación por la barbería.
+                  confirmación por la peluquería.
                 </p>
               </div>
 
@@ -257,7 +284,7 @@ export function BookingPage() {
                   Ver mis citas
                 </Button>
                 <Button full variant="secondary" size="lg" onClick={() => navigate('/')}>
-                  Explorar más barberías
+                  Explorar más peluquerías
                 </Button>
               </div>
             </div>
@@ -268,10 +295,10 @@ export function BookingPage() {
                   <StepTitle
                     icon={<Scissors className="size-4" />}
                     title="¿Qué te vas a hacer?"
-                    subtitle="Elige el servicio. El precio se paga en la barbería."
+                    subtitle="Elige el servicio. El precio se paga en la peluquería."
                   />
                   <div className="space-y-2">
-                    {shop.services.map((item) => {
+                    {availableServices.map((item) => {
                       const active = item.id === serviceId
                       return (
                         <button
@@ -316,7 +343,7 @@ export function BookingPage() {
                   <StepTitle
                     icon={<UserRound className="size-4" />}
                     title="¿Con quién?"
-                    subtitle="Cada barbero tiene su especialidad y su agenda."
+                    subtitle="Cada profesional tiene su especialidad y su agenda."
                   />
                   <div className="space-y-2">
                     {shop.barbers.map((item) => {
@@ -452,7 +479,7 @@ export function BookingPage() {
                     <EmptyState
                       icon={<CalendarDays className="size-5" />}
                       title="Cerrado este día"
-                      message="La barbería no abre ese día. Prueba con otra fecha."
+                      message="La peluquería no abre ese día. Prueba con otra fecha."
                     />
                   )}
                 </>
@@ -463,7 +490,7 @@ export function BookingPage() {
                   <StepTitle
                     icon={<Check className="size-4" />}
                     title="Revisa y confirma"
-                    subtitle="Aún no se cobra nada. El pago se hace en la barbería."
+                    subtitle="Aún no se cobra nada. El pago se hace en la peluquería."
                   />
 
                   <div className="overflow-hidden rounded-3xl bg-white ring-1 ring-ink-200/70">
@@ -480,7 +507,7 @@ export function BookingPage() {
                     </Cover>
                     <dl className="divide-y divide-ink-100 px-4">
                       <SummaryRow label="Servicio" value={service.name} />
-                      <SummaryRow label="Barbero" value={barber.name} />
+                      <SummaryRow label="Profesional" value={barber.name} />
                       <SummaryRow label="Fecha" value={relativeDayLabel(date)} />
                       <SummaryRow label="Hora" value={`${time} h · ${durationLabel(service.durationMin)}`} />
                       <SummaryRow label="Total" value={formatPrice(service.price)} strong />
@@ -489,14 +516,14 @@ export function BookingPage() {
 
                   <div className="space-y-1.5">
                     <label htmlFor="notas" className="block text-sm font-medium text-ink-700">
-                      Notas para el barbero <span className="font-normal text-ink-400">(opcional)</span>
+                      Notas para el profesional <span className="font-normal text-ink-400">(opcional)</span>
                     </label>
                     <textarea
                       id="notas"
                       value={notes}
                       onChange={(event) => setNotes(event.target.value.slice(0, 200))}
                       rows={3}
-                      placeholder="Ej.: degradado bajo, barba corta, tengo el pelo rizado…"
+                      placeholder="Ej.: degradado bajo, flequillo, tengo el pelo rizado…"
                       className="w-full resize-none rounded-2xl bg-white p-3.5 text-sm text-ink-900 ring-1 ring-ink-200 outline-none placeholder:text-ink-400 focus:ring-2 focus:ring-ink-900"
                     />
                     <p className="text-right text-[11px] text-ink-400">{notes.length}/200</p>

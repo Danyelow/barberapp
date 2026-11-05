@@ -1,7 +1,8 @@
 # BarberApp · Frontend (PWA)
 
-Aplicación web progresiva **mobile first** para localizar barberías, consultar servicios y reservar cita
-con el barbero que elijas. Incluye panel de agenda para barberos.
+Aplicación web progresiva **mobile first** para localizar peluquerías de hombres y de mujeres,
+consultar servicios y reservar cita con el profesional que elijas. Incluye panel de agenda para
+barberos.
 
 Este directorio es el **frontend** del proyecto BarberApp: funciona de forma autónoma con una
 capa de datos simulada (`localStorage`), por lo que no necesita backend para probarse.
@@ -47,45 +48,59 @@ npm run dev
 
 ## Cuentas de demostración
 
-| Rol | Email | Contraseña |
-|---|---|---|
-| Cliente | `cliente@barberapp.dev` | `123456` |
-| Barbero | `barbero@barberapp.dev` | `123456` |
+| Rol | Email | Contraseña | Género autodeclarado |
+|---|---|---|---|
+| Cliente | `cliente@barberapp.dev` | `123456` | Mujer |
+| Barbero | `barbero@barberapp.dev` | `123456` | Hombre |
 
-También puedes registrarte: la cuenta se guarda solo en tu navegador.
+También puedes registrarte como cliente: el formulario pide nombre, email, teléfono, género y
+contraseña, y la cuenta se guarda solo en tu navegador. El registro de barberos no está disponible
+en la app: esas cuentas se crean desde la administración. La pantalla de login no muestra botones de
+demo, pero las cuentas de la tabla siguen existiendo para que las escribas manualmente.
 **No introduzcas datos personales reales** (el repositorio es público).
 
 ## Funcionalidad
 
-- **Inicio**: buscador por barbería / servicio / zona, filtros, tarjetas con distancia, rating,
-  precio desde y estado (abierto/cerrado), y recordatorio de la próxima cita.
-- **Mapa**: marcadores con precio, ficha flotante de la barbería y enlace a la reserva.
-- **Detalle de barbería**: portada, descripción, servicios con duración y precio, equipo, horario,
-  llamar, compartir y favorito.
-- **Reserva en 4 pasos**: servicio → barbero → día y hora → confirmación.
+- **Acceso**: sin sesión solo se muestran `/entrar` y `/registro`. Cualquier enlace profundo
+  redirige al login y vuelve a la ruta solicitada después de entrar.
+- **Registro solo para clientes**: el alta crea siempre cuentas `cliente`; las de barbero se
+  gestionan desde la administración. El género es obligatorio y se usa para aplicar restricciones.
+- **Inicio**: buscador por peluquería / servicio / zona, filtro por tipo (hombres / mujeres), tarjetas
+  con distancia, rating, precio desde y estado (abierto/cerrado), y recordatorio de la próxima cita.
+  Al entrar se solicita la ubicación y los resultados se ordenan por cercanía real.
+- **Mapa**: al abrir la pantalla pide geolocalización, centra el mapa en la persona usuaria, ordena
+  las peluquerías por distancia y muestra la ficha flotante con enlace a la reserva. Incluye estados
+  de permiso denegado, error, reintento y respaldo en el centro de Sevilla.
+- **Detalle de peluquería**: portada, descripción, tipo de peluquería, servicios con duración y
+  precio, equipo, horario, llamar, compartir y favorito. Los servicios de barba se ocultan de la
+  lista de servicios y del flujo de reserva a las clientas.
+- **Reserva en 4 pasos**: servicio → profesional → día y hora → confirmación.
   - Disponibilidad calculada en cliente: horario de apertura, duración del servicio, días cerrados,
     citas ya ocupadas y horas pasadas.
-  - Notas opcionales para el barbero y confirmación con resumen.
+  - Notas opcionales para el profesional y confirmación con resumen.
+  - Los servicios marcados como `onlyForMen` solo se ofrecen a quienes se identifican como hombre.
 - **Mis citas**: próximas e historial, cancelación con confirmación y repetición de una reserva.
 - **Agenda (barbero)**: citas de hoy, próximas e historial; confirmar, completar o cancelar;
   contacto directo con el cliente; métricas de hoy, pendientes e ingresos.
 - **Perfil**: datos de la cuenta, preferencias, instalación de la PWA, restablecer datos de demo y
   cierre de sesión.
-- **Autenticación**: login, registro, sesión persistente y rutas protegidas con retorno a la ruta
-  solicitada.
+- **Autenticación**: login, sesión persistente, registro de clientes y redirecciones para que un
+  usuario con sesión no vuelva a las pantallas de acceso.
 
 ## Rutas
+
+Todas las rutas salvo las dos de autenticación requieren sesión.
 
 | Ruta | Descripción |
 |---|---|
 | `/` | Descubrir barberías |
-| `/mapa` | Mapa interactivo (`?shop=id` preselecciona una barbería) |
+| `/mapa` | Mapa interactivo con geolocalización (`?shop=id` preselecciona una barbería) |
 | `/barberia/:id` | Detalle de barbería |
 | `/barberia/:id/reservar` | Flujo de reserva (`?servicio=` y `?barbero=` preseleccionan) |
-| `/citas` | Mis citas (requiere sesión) |
+| `/citas` | Mis citas |
 | `/agenda` | Panel del barbero |
 | `/perfil` | Cuenta y ajustes |
-| `/entrar`, `/registro` | Autenticación |
+| `/entrar`, `/registro` | Autenticación (solo sin sesión) |
 
 ## Estructura
 
@@ -98,10 +113,11 @@ frontend/
 │   ├── api/
 │   │   ├── mockApi.ts          # API simulada con latencia y validación de solapes
 │   │   └── storage.ts          # localStorage + datos semilla
-│   ├── auth/                   # AuthContext + RequireAuth
+│   ├── auth/                   # AuthContext, RequireAuth, PublicOnly
 │   ├── components/             # AppShell, BottomNav, MapView, BookingCard, ui…
-│   ├── data/barbershops.ts     # 6 barberías, servicios y barberos ficticios
-│   ├── lib/                    # fechas, disponibilidad, distancia, cn
+│   ├── data/barbershops.ts     # 10 peluquerías de Sevilla, servicios y barberos ficticios
+│   ├── lib/                    # fechas, disponibilidad, geo, servicios, cn…
+│   │                           # useUserLocation: caché y estados de geolocalización
 │   ├── pages/                  # una pantalla por ruta
 │   ├── pwa/InstallPrompt.tsx   # beforeinstallprompt + instrucciones iOS
 │   ├── store/BookingsContext.tsx
@@ -136,8 +152,10 @@ frontend/
 
 No hay backend conectado todavía. `src/api/mockApi.ts`:
 
-- Persiste usuarios, sesión y reservas en `localStorage` (`barberapp.*.v1`).
-- Simula latencia y comprueba solapes al crear una reserva.
+- Persiste usuarios, sesión, reservas y la última ubicación en `localStorage`
+  (`barberapp.*.v1`).
+- Simula latencia, comprueba solapes y rechaza reservas de servicios de barba si el género no es
+  `hombre` (la UI también los oculta).
 - Genera ocupación determinista por barbero y día para que el mapa de huecos sea realista.
 - Incluye reservas semilla (cliente y agenda del barbero) que se regeneran si no hay citas futuras.
 
@@ -157,5 +175,6 @@ Para conectar la API real (Django + Django REST Framework) basta con sustituir l
 - El pago se realiza en la barbería: no hay pasarela de pago.
 - El alta de barberías y barberos se hará desde el panel de administración (Django Admin), fuera de
   este frontend.
-- Las notificaciones push y la geolocalización real del usuario quedan como ampliación futura; la
-  distancia se calcula desde una posición fija del centro de Madrid.
+- La geolocalización requiere `https` o `localhost` y permiso del navegador. Si se deniega, la app
+  sigue funcionando con el centro de Sevilla como posición de respaldo.
+- Las notificaciones push quedan como ampliación futura.

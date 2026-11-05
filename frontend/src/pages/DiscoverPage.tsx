@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom'
 import {
   ArrowRight,
   CalendarCheck2,
+  Loader2,
+  LocateFixed,
   MapPin,
   Search,
-  SlidersHorizontal,
   Sparkles,
   X,
 } from 'lucide-react'
@@ -15,19 +16,28 @@ import { BarbershopCard } from '../components/BarbershopCard'
 import { useBookings } from '../store/BookingsContext'
 import { findBarbershop, findService } from '../data/barbershops'
 import { formatPrice, relativeDayLabel } from '../lib/date'
+import { distanceKm, USER_LOCATION } from '../lib/geo'
+import { useUserLocation } from '../lib/useUserLocation'
 import { cn } from '../lib/cn'
 import { Avatar, EmptyState, Skeleton } from '../components/ui'
-import type { Barbershop } from '../data/barbershops'
+import type { Barbershop, ShopType } from '../data/barbershops'
 
-const filters = ['Todos', 'Fade', 'Barba', 'Clásico', 'Rizos', 'Económico']
+type ShopTypeFilter = 'todos' | ShopType
+
+const shopTypeFilters: { id: ShopTypeFilter; label: string }[] = [
+  { id: 'todos', label: 'Todas' },
+  { id: 'hombres', label: 'Hombres' },
+  { id: 'mujeres', label: 'Mujeres' },
+]
 
 export function DiscoverPage() {
   const { user } = useAuth()
   const { bookings } = useBookings()
+  const { coords, status, request } = useUserLocation({ requestOnMount: true })
   const [shops, setShops] = useState<Barbershop[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState('Todos')
+  const [shopType, setShopType] = useState<ShopTypeFilter>('todos')
 
   useEffect(() => {
     let alive = true
@@ -48,16 +58,24 @@ export function DiscoverPage() {
     }
   }, [query])
 
-  const visible = useMemo(
-    () =>
-      shops.filter(
-        (shop) =>
-          filter === 'Todos' ||
-          shop.tags.some((tag) => tag.toLowerCase().includes(filter.toLowerCase())) ||
-          shop.services.some((service) => service.name.toLowerCase().includes(filter.toLowerCase())),
-      ),
-    [shops, filter],
-  )
+  const visible = useMemo(() => {
+    const from = coords ?? USER_LOCATION
+    return shops
+      .filter((shop) => shopType === 'todos' || shop.shopType === shopType)
+      .sort(
+        (a, b) =>
+          distanceKm(from.lat, from.lng, a.lat, a.lng) -
+          distanceKm(from.lat, from.lng, b.lat, b.lng),
+      )
+  }, [shops, shopType, coords])
+
+  const locating = status === 'requesting'
+  const typeLabel =
+    shopType === 'todos'
+      ? 'peluquerías'
+      : shopType === 'hombres'
+        ? 'peluquerías de hombres'
+        : 'peluquerías de mujeres'
 
   const nextBooking = useMemo(() => {
     if (!user || user.role !== 'cliente') return null
@@ -98,8 +116,8 @@ export function DiscoverPage() {
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Barbería, servicio o zona"
-                aria-label="Buscar barberías"
+                placeholder="Peluquería, zona o servicio"
+                aria-label="Buscar peluquerías"
                 className="h-11 w-full rounded-2xl bg-white pl-10 pr-4 text-sm text-ink-900 ring-1 ring-ink-200 outline-none transition placeholder:text-ink-400 focus:ring-2 focus:ring-ink-900"
               />
             </div>
@@ -138,43 +156,54 @@ export function DiscoverPage() {
           </Link>
         ) : null}
 
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-500 via-brand-400 to-brand-300 p-5 text-ink-950">
-          <div className="pointer-events-none absolute -right-6 -top-8 size-32 rounded-full bg-white/20 blur-2xl" />
-          <div className="pointer-events-none absolute -bottom-10 right-6 size-24 rounded-full bg-ink-900/10 blur-xl" />
-          <span className="inline-flex items-center gap-1 rounded-full bg-ink-950/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest">
-            <Sparkles className="size-3" aria-hidden />
-            Reserva en 30 s
-          </span>
-          <h2 className="mt-2 max-w-[16rem] text-2xl font-extrabold leading-tight">
-            Tu próximo corte, a un toque.
-          </h2>
-          <p className="mt-1 max-w-[17rem] text-[13px] font-medium text-ink-900/70">
-            Elige barbería, barbero y hora. Sin llamadas, sin esperas.
-          </p>
-          <Link
-            to="/mapa"
-            className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-ink-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-ink-900"
-          >
-            <MapPin className="size-4" aria-hidden />
-            Explorar mapa
-          </Link>
+        <section className="relative overflow-hidden rounded-3xl bg-ink-950 p-5 text-white">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Puente_de_Triana_de_noche.jpg/1280px-Puente_de_Triana_de_noche.jpg"
+            alt="Puente de Triana sobre el río Guadalquivir al anochecer"
+            className="absolute inset-0 size-full object-cover"
+            onError={(event) => {
+              event.currentTarget.style.display = 'none'
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-ink-950/95 via-ink-950/75 to-ink-950/25" />
+          <div className="absolute inset-0 bg-gradient-to-t from-ink-950/75 via-transparent to-transparent" />
+          <div className="relative">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white backdrop-blur">
+              <Sparkles className="size-3" aria-hidden />
+              Reserva en 30 s
+            </span>
+            <h2 className="mt-2 max-w-[16rem] text-2xl font-extrabold leading-tight">
+              Tu próximo look, a un toque.
+            </h2>
+            <p className="mt-1 max-w-[17rem] text-[13px] font-medium text-white/75">
+              Elige peluquería, profesional y hora. Sin llamadas, sin esperas.
+            </p>
+            <Link
+              to="/mapa"
+              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-ink-950 shadow-sm transition hover:bg-brand-400"
+            >
+              <MapPin className="size-4" aria-hidden />
+              Explorar mapa
+            </Link>
+            <p className="mt-3 text-[10px] font-medium text-white/60">Puente de Triana · Sevilla</p>
+          </div>
         </section>
 
         <div className="-mx-4 overflow-x-auto px-4 no-scrollbar">
           <div className="flex gap-2">
-            {filters.map((item) => (
+            {shopTypeFilters.map((item) => (
               <button
-                key={item}
+                key={item.id}
                 type="button"
-                onClick={() => setFilter(item)}
+                onClick={() => setShopType(item.id)}
                 className={cn(
                   'shrink-0 rounded-full px-3.5 py-2 text-[13px] font-semibold transition',
-                  filter === item
+                  shopType === item.id
                     ? 'bg-ink-900 text-white shadow-sm'
                     : 'bg-white text-ink-600 ring-1 ring-ink-200 hover:bg-ink-50',
                 )}
               >
-                {item}
+                {item.label}
               </button>
             ))}
           </div>
@@ -185,16 +214,27 @@ export function DiscoverPage() {
             <div>
               <h2 className="text-base font-bold text-ink-900">Cerca de ti</h2>
               <p className="text-xs text-ink-500">
-                {loading ? 'Buscando barberías…' : `${visible.length} barberías en Madrid`}
+                {loading
+                  ? 'Buscando peluquerías…'
+                  : locating
+                    ? 'Buscando tu ubicación…'
+                    : `${visible.length} ${typeLabel} ${coords ? 'ordenadas por cercanía' : 'en Sevilla'}`}
               </p>
             </div>
             <button
               type="button"
-              onClick={() => setFilter('Todos')}
-              className="inline-flex items-center gap-1 rounded-xl px-2 py-1 text-xs font-semibold text-ink-600 hover:bg-ink-100"
+              onClick={request}
+              disabled={locating}
+              className="inline-flex items-center gap-1 rounded-xl px-2 py-1 text-xs font-semibold text-ink-600 hover:bg-ink-100 disabled:cursor-wait disabled:opacity-60"
+              aria-label="Actualizar mi ubicación"
+              title="Actualizar mi ubicación"
             >
-              <SlidersHorizontal className="size-3.5" aria-hidden />
-              Todos
+              {locating ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              ) : (
+                <LocateFixed className="size-3.5" aria-hidden />
+              )}
+              {coords ? 'Actualizar' : 'Ubicación'}
             </button>
           </div>
 
@@ -213,25 +253,29 @@ export function DiscoverPage() {
           ) : visible.length ? (
             <div className="space-y-4">
               {visible.map((shop) => (
-                <BarbershopCard key={shop.id} shop={shop} />
+                <BarbershopCard key={shop.id} shop={shop} location={coords} />
               ))}
             </div>
           ) : (
             <EmptyState
               icon={<Search className="size-5" />}
               title="Sin resultados"
-              message={`No encontramos barberías para “${query}”. Prueba con otro servicio o zona.`}
+              message={
+                query.trim()
+                  ? `No encontramos peluquerías para “${query}”. Prueba con otra zona o servicio.`
+                  : 'No hay peluquerías de este tipo. Prueba con el otro tipo de peluquería.'
+              }
               action={
                 <button
                   type="button"
                   onClick={() => {
                     setQuery('')
-                    setFilter('Todos')
+                    setShopType('todos')
                   }}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-ink-900 px-3 py-2 text-sm font-semibold text-white"
                 >
                   <X className="size-3.5" aria-hidden />
-                  Limpiar búsqueda
+                  Limpiar filtros
                 </button>
               }
             />
@@ -242,9 +286,9 @@ export function DiscoverPage() {
           <h2 className="text-sm font-bold text-ink-900">¿Cómo funciona?</h2>
           <ol className="mt-3 space-y-3">
             {[
-              'Busca una barbería cerca de ti.',
-              'Elige servicio, barbero, día y hora.',
-              'Confirma y listo: te esperamos.',
+              'Elige peluquería de hombres o de mujeres.',
+              'Busca una cerca de ti y revisa sus servicios.',
+              'Reserva servicio, profesional, día y hora. Listo.',
             ].map((step, index) => (
               <li key={step} className="flex items-start gap-3 text-[13px] text-ink-600">
                 <span className="grid size-6 shrink-0 place-items-center rounded-full bg-ink-900 text-[11px] font-bold text-brand-400">

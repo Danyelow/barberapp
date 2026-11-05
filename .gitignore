@@ -48,6 +48,10 @@ backend/media/
 backend/staticfiles/
 local_settings.py
 
+# Binarios nativos de GeoDjango/SpatiaLite (instalar en local, ver README)
+backend/.spatialite/
+backend/.gdal/
+
 # ---------- Entorno / secretos ----------
 .env
 .env.*

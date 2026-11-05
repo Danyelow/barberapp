@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { Loader2, Star, X } from 'lucide-react'
+import { Loader2, ChevronDown, Star, X } from 'lucide-react'
 import { cn } from '../lib/cn'
 
 /* ------------------------------ Button ------------------------------ */
@@ -91,6 +91,57 @@ export function Field({ label, hint, error, icon, className, id, ...props }: Fie
             error ? 'ring-red-400 focus:ring-red-500' : 'focus:ring-ink-900',
             className,
           )}
+        />
+      </div>
+      {error ? (
+        <p className="text-xs font-medium text-red-600">{error}</p>
+      ) : hint ? (
+        <p className="text-xs text-ink-500">{hint}</p>
+      ) : null}
+    </div>
+  )
+}
+
+/* --------------------------- Select field --------------------------- */
+
+type SelectFieldProps = ComponentProps<'select'> & {
+  label: string
+  hint?: string
+  error?: string
+}
+
+export function SelectField({
+  label,
+  hint,
+  error,
+  className,
+  id,
+  children,
+  ...props
+}: SelectFieldProps) {
+  const selectId = id ?? props.name ?? label.toLowerCase().replace(/\s+/g, '-')
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={selectId} className="block text-sm font-medium text-ink-700">
+        {label}
+      </label>
+      <div className="relative">
+        <select
+          id={selectId}
+          {...props}
+          aria-invalid={Boolean(error)}
+          className={cn(
+            'h-12 w-full appearance-none rounded-2xl bg-white pl-4 pr-10 text-[15px] text-ink-900 ring-1 ring-ink-200 outline-none transition focus:ring-2',
+            !props.value && 'text-ink-400',
+            error ? 'ring-red-400 focus:ring-red-500' : 'focus:ring-ink-900',
+            className,
+          )}
+        >
+          {children}
+        </select>
+        <ChevronDown
+          className="pointer-events-none absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-400"
+          aria-hidden
         />
       </div>
       {error ? (

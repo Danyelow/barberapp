@@ -19,6 +19,10 @@ ENV/
 /staticfiles/
 local_settings.py
 
+# Binarios nativos de GeoDjango/SpatiaLite (instalar en local, ver README)
+/.spatialite/
+/.gdal/
+
 # Entorno (sí se sube .env.example)
 .env
 .env.*

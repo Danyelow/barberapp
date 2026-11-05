@@ -3,7 +3,19 @@ from django.db import models
 
 
 class Client(AbstractUser):
+    class Gender(models.TextChoices):
+        WOMAN = 'mujer', 'Mujer'
+        MAN = 'hombre', 'Hombre'
+        NON_BINARY = 'no_binario', 'No binario'
+        UNDISCLOSED = 'prefiero_no_decir', 'Prefiero no decirlo'
+
     phone = models.CharField(max_length=20, blank=True)
+    gender = models.CharField(
+        max_length=20,
+        choices=Gender.choices,
+        blank=True,
+        help_text='Género autodeclarado por el cliente.',
+    )
     preferred_barber = models.ForeignKey(
         'barbers.Barber',
         on_delete=models.SET_NULL,

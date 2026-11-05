@@ -138,14 +138,14 @@ export function BookingsPage() {
           <EmptyState
             icon={<CalendarDays className="size-5" />}
             title="Sin citas próximas"
-            message="Encuentra tu barbería y reserva en menos de un minuto."
+            message="Encuentra tu peluquería y reserva en menos de un minuto."
             action={
               <Link
                 to="/"
                 className="inline-flex items-center gap-2 rounded-xl bg-ink-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-ink-800"
               >
                 <Scissors className="size-4" aria-hidden />
-                Buscar barbería
+                Buscar peluquería
               </Link>
             }
           />

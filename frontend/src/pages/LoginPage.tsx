@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowRight, Mail, Scissors, ShieldCheck, Store } from 'lucide-react'
+import { ArrowRight, Mail, Scissors, ShieldCheck, UserRoundPlus } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { BrandMark, AuthShell } from '../components/AppShell'
 import { Button, Field } from '../components/ui'
@@ -19,7 +19,6 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [demoLoading, setDemoLoading] = useState<'cliente' | 'barbero' | null>(null)
 
   const go = (user: User) => {
     if (from) {
@@ -48,38 +47,17 @@ export function LoginPage() {
     }
   }
 
-  const demoLogin = async (role: 'cliente' | 'barbero') => {
-    setError('')
-    setDemoLoading(role)
-    try {
-      const credentials =
-        role === 'cliente'
-          ? { email: 'cliente@barberapp.dev', password: '123456' }
-          : { email: 'barbero@barberapp.dev', password: '123456' }
-      const user = await login(credentials.email, credentials.password)
-      toast(`Sesión demo iniciada como ${user.name.split(' ')[0]}`)
-      go(user)
-    } catch {
-      setError('No se pudo iniciar la sesión de demostración.')
-    } finally {
-      setDemoLoading(null)
-    }
-  }
-
   return (
     <AuthShell>
       <div className="flex min-h-dvh flex-col px-5 safe-top">
         <div className="flex items-center justify-between py-4">
           <BrandMark />
-          <Link to="/" className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-500 hover:bg-ink-100">
-            Saltar
-          </Link>
         </div>
 
         <div className="flex-1 pb-10 pt-4">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-brand-700">
             <Scissors className="size-3" aria-hidden />
-            Tu barbería de confianza
+            Tu peluquería de confianza
           </span>
           <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-ink-900">
             Bienvenido
@@ -107,7 +85,7 @@ export function LoginPage() {
               type="password"
               autoComplete="current-password"
               placeholder="••••••"
-              hint="Mínimo 6 caracteres en la demo."
+              hint="Mínimo 6 caracteres."
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
@@ -124,43 +102,15 @@ export function LoginPage() {
             </Button>
           </form>
 
-          <div className="my-6 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-widest text-ink-400">
-            <span className="h-px flex-1 bg-ink-200" />
-            o entra en la demo
-            <span className="h-px flex-1 bg-ink-200" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant="secondary"
-              full
-              loading={demoLoading === 'cliente'}
-              onClick={() => void demoLogin('cliente')}
-              className="h-auto flex-col gap-1 py-3"
-            >
-              <Scissors className="size-4" aria-hidden />
-              <span className="text-[13px]">Cliente</span>
-              <span className="text-[10px] font-normal text-ink-500">cliente@barberapp.dev</span>
+          <Link to="/registro" className="mt-3 block">
+            <Button variant="secondary" full size="lg">
+              <UserRoundPlus className="size-4" aria-hidden />
+              Registrarme como cliente
             </Button>
-            <Button
-              variant="secondary"
-              full
-              loading={demoLoading === 'barbero'}
-              onClick={() => void demoLogin('barbero')}
-              className="h-auto flex-col gap-1 py-3"
-            >
-              <Store className="size-4" aria-hidden />
-              <span className="text-[13px]">Barbero</span>
-              <span className="text-[10px] font-normal text-ink-500">barbero@barberapp.dev</span>
-            </Button>
-          </div>
-          <p className="mt-2 text-center text-[11px] text-ink-400">Contraseña de ambas cuentas: 123456</p>
-
-          <p className="mt-6 text-center text-sm text-ink-500">
-            ¿No tienes cuenta?{' '}
-            <Link to="/registro" className="font-semibold text-ink-900 underline underline-offset-4">
-              Crear una gratis
-            </Link>
+          </Link>
+          <p className="mt-2 text-center text-[11px] text-ink-400">
+            El registro está abierto solo para clientes. Las cuentas de barbero las crea la
+            administración.
           </p>
 
           <p className="mt-8 flex items-center justify-center gap-1.5 text-[10px] text-ink-400">

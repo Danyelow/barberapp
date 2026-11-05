@@ -11,7 +11,7 @@ export function NotFoundPage() {
       <p className="mt-4 text-4xl font-black tracking-tight text-ink-900">404</p>
       <h1 className="mt-1 text-lg font-bold text-ink-900">Esta página no existe</h1>
       <p className="mt-1 max-w-xs text-sm text-ink-500">
-        Puede que el enlace esté mal escrito o que la barbería ya no esté disponible.
+        Puede que el enlace esté mal escrito o que la peluquería ya no esté disponible.
       </p>
       <Link to="/" className="mt-5">
         <Button size="lg">Volver al inicio</Button>

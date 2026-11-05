@@ -1,11 +1,19 @@
 export type Role = 'cliente' | 'barbero'
 
+export type Gender = 'mujer' | 'hombre' | 'no_binario' | 'prefiero_no_decir'
+
 export type User = {
   id: string
   name: string
   email: string
   phone: string
   role: Role
+  /**
+   * Género autodeclarado en el registro. Es opcional para no romper sesiones
+   * antiguas guardadas en localStorage; sin él, los servicios de barba
+   * (solo para hombres) no están disponibles.
+   */
+  gender?: Gender
   /** Solo si role === 'barbero' */
   barberId?: string
   barbershopId?: string

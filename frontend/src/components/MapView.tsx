@@ -1,9 +1,11 @@
 import * as L from 'leaflet'
-import { MapContainer, Marker, TileLayer, Tooltip, ZoomControl } from 'react-leaflet'
+import { useEffect } from 'react'
+import { MapContainer, Marker, TileLayer, Tooltip, ZoomControl, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Barbershop } from '../data/barbershops'
 import { formatPrice } from '../lib/date'
 import { USER_LOCATION } from '../lib/geo'
+import type { Coordinates } from '../lib/geo'
 
 const priceIcon = (shop: Barbershop, selected: boolean) =>
   L.divIcon({
@@ -33,21 +35,36 @@ const userIcon = L.divIcon({
   iconAnchor: [8, 8],
 })
 
+function RecenterOnUser({ coords }: { coords: Coordinates | null }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!coords) return
+    map.flyTo([coords.lat, coords.lng], Math.max(map.getZoom(), 14), { duration: 0.8 })
+  }, [coords, map])
+
+  return null
+}
+
 export function MapView({
   shops,
   selectedId,
   onSelect,
+  userLocation,
 }: {
   shops: Barbershop[]
   selectedId: string | null
   onSelect: (id: string) => void
+  userLocation: Coordinates | null
 }) {
+  const center = userLocation ?? USER_LOCATION
+
   return (
     <MapContainer
-      center={[USER_LOCATION.lat, USER_LOCATION.lng]}
+      center={[center.lat, center.lng]}
       zoom={14}
       zoomControl={false}
-      scrollWheelZoom={false}
+      scrollWheelZoom
       className="size-full"
     >
       <TileLayer
@@ -55,11 +72,18 @@ export function MapView({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <ZoomControl position="topright" />
-      <Marker position={[USER_LOCATION.lat, USER_LOCATION.lng]} icon={userIcon} zIndexOffset={500}>
-        <Tooltip direction="top" offset={[0, -10]}>
-          Estás aquí
-        </Tooltip>
-      </Marker>
+      <RecenterOnUser coords={userLocation} />
+      {userLocation ? (
+        <Marker
+          position={[userLocation.lat, userLocation.lng]}
+          icon={userIcon}
+          zIndexOffset={500}
+        >
+          <Tooltip direction="top" offset={[0, -10]}>
+            Estás aquí
+          </Tooltip>
+        </Marker>
+      ) : null}
       {shops.map((shop) => (
         <Marker
           key={shop.id}

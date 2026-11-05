@@ -10,8 +10,10 @@ export const distanceKm = (aLat: number, aLng: number, bLat: number, bLng: numbe
   return earth * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h))
 }
 
-/** Posición simulada del usuario (centro de Madrid). */
-export const USER_LOCATION = { lat: 40.4265, lng: -3.7045 }
+export type Coordinates = { lat: number; lng: number }
+
+/** Posición de respaldo (centro de Sevilla) si el usuario no concede ubicación. */
+export const USER_LOCATION: Coordinates = { lat: 37.3891, lng: -5.9845 }
 
 export const formatDistance = (km: number) =>
   km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1).replace('.', ',')} km`

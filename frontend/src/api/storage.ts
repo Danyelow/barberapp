@@ -38,6 +38,7 @@ const seedUsers = (): StoredUser[] => [
     email: 'cliente@barberapp.dev',
     phone: '+34 600 111 222',
     role: 'cliente',
+    gender: 'mujer',
     password: '123456',
   },
   {
@@ -46,6 +47,7 @@ const seedUsers = (): StoredUser[] => [
     email: 'barbero@barberapp.dev',
     phone: '+34 600 333 444',
     role: 'barbero',
+    gender: 'hombre',
     barberId: 'mateo',
     barbershopId: 'el-clasico',
     password: '123456',
@@ -93,8 +95,8 @@ const seedBookings = (): Booking[] => [
     serviceId: 'completo',
     date: dayFromNow(-9),
     time: '11:30',
-    durationMin: 45,
-    price: 22,
+    durationMin: 60,
+    price: 35,
     status: 'completada',
     createdAt: new Date().toISOString(),
   },
@@ -120,11 +122,11 @@ const seedBookings = (): Booking[] => [
     customerPhone: '+34 600 111 222',
     barbershopId: 'el-clasico',
     barberId: 'mateo',
-    serviceId: 'navaja',
+    serviceId: 'corte',
     date: dayFromNow(2),
     time: '19:00',
     durationMin: 30,
-    price: 20,
+    price: 18,
     status: 'pendiente',
     createdAt: new Date().toISOString(),
   },
@@ -134,14 +136,61 @@ export const ensureSeedData = () => {
   if (!read<StoredUser[] | null>(KEYS.users, null)) write(KEYS.users, seedUsers())
   if (!read<Booking[] | null>(KEYS.bookings, null)) write(KEYS.bookings, seedBookings())
 
-  const bookings = read<Booking[]>(KEYS.bookings, [])
+  // Sesiones antiguas: completa el género de las cuentas demo si faltaba.
+  const users = read<StoredUser[]>(KEYS.users, [])
+  let migrated = false
+  const nextUsers = users.map((user) => {
+    if (user.gender) return user
+    if (user.id === 'u-cliente') {
+      migrated = true
+      return { ...user, gender: 'mujer' as const }
+    }
+    if (user.id === 'u-barbero') {
+      migrated = true
+      return { ...user, gender: 'hombre' as const }
+    }
+    return user
+  })
+  if (migrated) write(KEYS.users, nextUsers)
+
+  // Los datos de demo han pasado de Madrid a Sevilla. Las reservas antiguas
+  // conservan sus IDs, pero si apuntan a un servicio retirado o a un servicio
+  // de barba reservado por una clienta, se reasignan a un servicio válido.
+  const storedBookings = read<Booking[]>(KEYS.bookings, [])
+  let bookingsMigrated = false
+  const bookings = storedBookings.map((booking) => {
+    const shop = barbershops.find((item) => item.id === booking.barbershopId)
+    if (!shop) return booking
+
+    const service = shop.services.find((item) => item.id === booking.serviceId)
+    const user = nextUsers.find((item) => item.id === booking.userId)
+    const unavailable = !service || (service.onlyForMen && user?.gender !== 'hombre')
+    if (!unavailable) return booking
+
+    const fallback = shop.services.find((item) => !item.onlyForMen)
+    if (!fallback) return booking
+
+    bookingsMigrated = true
+    return {
+      ...booking,
+      serviceId: fallback.id,
+      price: fallback.price,
+      durationMin: fallback.durationMin,
+    }
+  })
+  if (bookingsMigrated) write(KEYS.bookings, bookings)
+
   // Mantiene la agenda del barbero demo con contenido aunque pasen los días.
   const hasUpcomingBarberBooking = bookings.some(
-    (booking) => booking.barberId === 'mateo' && booking.date >= toISODate(new Date()) && booking.status !== 'cancelada',
+    (booking) =>
+      booking.barberId === 'mateo' &&
+      booking.date >= toISODate(new Date()) &&
+      booking.status !== 'cancelada',
   )
 
   if (!hasUpcomingBarberBooking) {
     const shop = barbershops[0]
+    const service = shop.services.find((item) => !item.onlyForMen) ?? shop.services[0]
     const newBooking: Booking = {
       id: `b-seed-${Date.now()}`,
       userId: 'u-cliente',
@@ -149,11 +198,11 @@ export const ensureSeedData = () => {
       customerPhone: '+34 600 111 222',
       barbershopId: shop.id,
       barberId: 'mateo',
-      serviceId: shop.services[0].id,
+      serviceId: service.id,
       date: dayFromNow(1),
       time: '10:30',
-      durationMin: shop.services[0].durationMin,
-      price: shop.services[0].price,
+      durationMin: service.durationMin,
+      price: service.price,
       status: 'pendiente',
       createdAt: new Date().toISOString(),
     }

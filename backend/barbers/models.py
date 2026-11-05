@@ -1,13 +1,29 @@
 from django.contrib.auth.models import AbstractUser
-from django.db import models
+from django.contrib.gis.db import models
 
 
 class BarberShop(models.Model):
+    class Type(models.TextChoices):
+        MEN = 'hombres', 'Peluquería de hombres'
+        WOMEN = 'mujeres', 'Peluquería de mujeres'
+
     name = models.CharField(max_length=100)
+    shop_type = models.CharField(
+        max_length=10,
+        choices=Type.choices,
+        default=Type.MEN,
+        help_text='Tipo de peluquería: de hombres o de mujeres.',
+    )
     address = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=20, blank=True)
     email = models.EmailField(blank=True)
     description = models.TextField(blank=True)
+    location = models.PointField(
+        srid=4326,
+        null=True,
+        blank=True,
+        help_text='Coordenadas GPS de la barbería (punto, WGS84).',
+    )
     opening_time = models.TimeField(null=True, blank=True)
     closing_time = models.TimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -65,6 +81,10 @@ class HaircutType(models.Model):
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=6, decimal_places=2)
     duration_minutes = models.PositiveIntegerField(help_text='Estimated duration in minutes')
+    only_for_men = models.BooleanField(
+        default=False,
+        help_text='Restringe este servicio a clientes hombres (p. ej., arreglo o afeitado de barba).',
+    )
 
     class Meta:
         ordering = ['name']

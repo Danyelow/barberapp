@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -52,3 +53,15 @@ class Reservation(models.Model):
 
     def __str__(self):
         return f'{self.client} - {self.barber} - {self.date} {self.time}'
+
+    def clean(self):
+        super().clean()
+        if (
+            self.haircut_type_id
+            and self.haircut_type.only_for_men
+            and self.client_id
+            and self.client.gender != 'hombre'
+        ):
+            raise ValidationError(
+                {'haircut_type': 'Los servicios de barba solo están disponibles para clientes hombres.'}
+            )

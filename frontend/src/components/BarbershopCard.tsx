@@ -1,13 +1,31 @@
 import { Link } from 'react-router-dom'
 import { Clock, MapPin } from 'lucide-react'
+import { useAuth } from '../auth/AuthContext'
+import { shopTypeShortLabel } from '../data/barbershops'
 import type { Barbershop } from '../data/barbershops'
 import { formatPrice } from '../lib/date'
 import { distanceKm, formatDistance, USER_LOCATION } from '../lib/geo'
+import type { Coordinates } from '../lib/geo'
+import { canRequestService } from '../lib/services'
 import { Badge, Cover, Rating } from './ui'
 
-export function BarbershopCard({ shop }: { shop: Barbershop }) {
-  const minPrice = Math.min(...shop.services.map((service) => service.price))
-  const distance = distanceKm(USER_LOCATION.lat, USER_LOCATION.lng, shop.lat, shop.lng)
+export function BarbershopCard({
+  shop,
+  location,
+}: {
+  shop: Barbershop
+  location?: Coordinates | null
+}) {
+  const { user } = useAuth()
+  const availableServices = shop.services.filter((service) => canRequestService(service, user))
+  const priceSource = availableServices.length ? availableServices : shop.services
+  const minPrice = Math.min(...priceSource.map((service) => service.price))
+  const tags =
+    user?.gender === 'mujer'
+      ? shop.tags.filter((tag) => !/barba|afeita|navaja/i.test(tag))
+      : shop.tags
+  const origin = location ?? USER_LOCATION
+  const distance = distanceKm(origin.lat, origin.lng, shop.lat, shop.lng)
   const isOpen = !shop.closedDays.includes(new Date().getDay())
 
   return (
@@ -44,8 +62,11 @@ export function BarbershopCard({ shop }: { shop: Barbershop }) {
             Desde <strong className="text-sm font-bold text-ink-900">{formatPrice(minPrice)}</strong>
           </span>
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          {shop.tags.slice(0, 3).map((tag) => (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-800 ring-1 ring-brand-200">
+            {shopTypeShortLabel(shop.shopType)}
+          </span>
+          {tags.slice(0, 2).map((tag) => (
             <span
               key={tag}
               className="rounded-full bg-ink-100 px-2.5 py-1 text-[11px] font-medium text-ink-600"

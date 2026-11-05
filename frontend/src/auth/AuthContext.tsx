@@ -1,12 +1,20 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { mockApi } from '../api/mockApi'
-import type { User } from '../types'
+import type { Gender, User } from '../types'
+
+type RegisterInput = {
+  name: string
+  email: string
+  phone: string
+  password: string
+  gender: Gender
+}
 
 type AuthContextValue = {
   user: User | null
   login: (email: string, password: string) => Promise<User>
-  register: (input: { name: string; email: string; phone: string; password: string }) => Promise<User>
+  register: (input: RegisterInput) => Promise<User>
   logout: () => void
 }
 
@@ -22,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const register = useCallback(
-    async (input: { name: string; email: string; phone: string; password: string }) => {
+    async (input: RegisterInput) => {
       const nextUser = await mockApi.register(input)
       setUser(nextUser)
       return nextUser

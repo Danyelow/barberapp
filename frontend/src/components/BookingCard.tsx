@@ -122,7 +122,7 @@ export function BookingCard({ booking, role = 'cliente', busy = false, onCancel,
               className="ml-auto inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-ink-700 transition hover:bg-ink-100"
             >
               <CalendarPlus className="size-3.5" aria-hidden />
-              Ver barbería
+              Ver peluquería
             </Link>
           </>
         )}

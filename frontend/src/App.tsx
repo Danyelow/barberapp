@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { AppShell, ScrollToTop } from './components/AppShell'
 import { RequireAuth } from './auth/RequireAuth'
+import { PublicOnly } from './auth/PublicOnly'
 import { DiscoverPage } from './pages/DiscoverPage'
 import { BarbershopPage } from './pages/BarbershopPage'
 import { BookingsPage } from './pages/BookingsPage'
@@ -33,7 +34,13 @@ function App() {
     <>
       <ScrollToTop />
       <Routes>
-        <Route element={<AppShell />}>
+        <Route
+          element={
+            <RequireAuth>
+              <AppShell />
+            </RequireAuth>
+          }
+        >
           <Route index element={<DiscoverPage />} />
           <Route
             path="mapa"
@@ -43,22 +50,8 @@ function App() {
               </Suspense>
             }
           />
-          <Route
-            path="citas"
-            element={
-              <RequireAuth>
-                <BookingsPage />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="agenda"
-            element={
-              <RequireAuth>
-                <AgendaPage />
-              </RequireAuth>
-            }
-          />
+          <Route path="citas" element={<BookingsPage />} />
+          <Route path="agenda" element={<AgendaPage />} />
           <Route path="perfil" element={<ProfilePage />} />
           <Route path="barberia/:id" element={<BarbershopPage />} />
           <Route path="*" element={<NotFoundPage />} />
@@ -74,8 +67,22 @@ function App() {
             </RequireAuth>
           }
         />
-        <Route path="entrar" element={<LoginPage />} />
-        <Route path="registro" element={<RegisterPage />} />
+        <Route
+          path="entrar"
+          element={
+            <PublicOnly>
+              <LoginPage />
+            </PublicOnly>
+          }
+        />
+        <Route
+          path="registro"
+          element={
+            <PublicOnly>
+              <RegisterPage />
+            </PublicOnly>
+          }
+        />
       </Routes>
     </>
   )

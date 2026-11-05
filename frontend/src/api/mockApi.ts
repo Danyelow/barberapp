@@ -1,6 +1,7 @@
-import { barbershops, findBarbershop, findService } from '../data/barbershops'
+import { barbershops, findBarbershop, findService, shopTypeLabel } from '../data/barbershops'
 import { toISODate } from '../lib/date'
-import type { Booking, BookingDraft, BookingStatus, StoredUser, User } from '../types'
+import { RESTRICTED_SERVICE_MESSAGE } from '../lib/services'
+import type { Booking, BookingDraft, BookingStatus, Gender, StoredUser, User } from '../types'
 import { ensureSeedData, KEYS, read, write } from './storage'
 
 const LATENCY = 260
@@ -36,13 +37,23 @@ export const mockApi = {
       }, LATENCY)
     }),
 
-  register: (input: { name: string; email: string; phone: string; password: string }) =>
+  register: (input: {
+    name: string
+    email: string
+    phone: string
+    password: string
+    gender: Gender
+  }) =>
     new Promise<User>((resolve, reject) => {
       setTimeout(() => {
         ensureSeedData()
         const users = read<StoredUser[]>(KEYS.users, [])
         if (users.some((user) => normalize(user.email) === normalize(input.email.trim()))) {
           reject(new Error('Ya existe una cuenta con ese email.'))
+          return
+        }
+        if (!input.gender) {
+          reject(new Error('Selecciona cómo te identificas.'))
           return
         }
         const user: StoredUser = {
@@ -52,6 +63,7 @@ export const mockApi = {
           phone: input.phone.trim(),
           password: input.password,
           role: 'cliente',
+          gender: input.gender,
         }
         write(KEYS.users, [...users, user])
         write(KEYS.session, user.id)
@@ -82,7 +94,14 @@ export const mockApi = {
     return delay(
       barbershops.filter((shop) => {
         const haystack = normalize(
-          [shop.name, shop.city, shop.address, ...shop.tags, ...shop.services.map((service) => service.name)].join(' '),
+          [
+            shop.name,
+            shop.city,
+            shop.address,
+            shopTypeLabel(shop.shopType),
+            ...shop.tags,
+            ...shop.services.map((service) => service.name),
+          ].join(' '),
         )
         return haystack.includes(term)
       }),
@@ -117,6 +136,11 @@ export const mockApi = {
         const service = findService(draft.barbershopId, draft.serviceId)
         if (!shop || !service) {
           reject(new Error('No se ha podido preparar la reserva.'))
+          return
+        }
+        const user = read<StoredUser[]>(KEYS.users, []).find((item) => item.id === draft.userId)
+        if (service.onlyForMen && user?.gender !== 'hombre') {
+          reject(new Error(RESTRICTED_SERVICE_MESSAGE))
           return
         }
         const bookings = read<Booking[]>(KEYS.bookings, [])

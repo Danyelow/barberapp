@@ -10,10 +10,48 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# ---------------------------------------------------------------------------
+# GeoDjango + SpatiaLite
+# Los binarios nativos viven en backend/.spatialite y backend/.gdal
+# (no se suben al repo; ver README). Si no existen, se intenta cargar la
+# librería del sistema (PATH).
+# ---------------------------------------------------------------------------
+SPATIALITE_DIR = BASE_DIR / '.spatialite'
+GDAL_DIR = BASE_DIR / '.gdal' / 'osgeo'
+_DLL_DIR_HANDLES = []
+
+for _lib_dir in (SPATIALITE_DIR, GDAL_DIR):
+    if _lib_dir.is_dir():
+        os.environ['PATH'] = f"{_lib_dir}{os.pathsep}{os.environ.get('PATH', '')}"
+        if hasattr(os, 'add_dll_directory'):
+            # El handle debe mantenerse vivo mientras dure el proceso.
+            _DLL_DIR_HANDLES.append(os.add_dll_directory(str(_lib_dir)))
+
+SPATIALITE_LIBRARY_PATH = (
+    str(SPATIALITE_DIR / 'mod_spatialite.dll')
+    if (SPATIALITE_DIR / 'mod_spatialite.dll').is_file()
+    else 'mod_spatialite'
+)
+
+_proj_data = None
+if (GDAL_DIR / 'gdal.dll').is_file():
+    GDAL_LIBRARY_PATH = str(GDAL_DIR / 'gdal.dll')
+    GEOS_LIBRARY_PATH = str(GDAL_DIR / 'geos_c.dll')
+    os.environ.setdefault('GDAL_DATA', str(GDAL_DIR / 'data' / 'gdal'))
+    _proj_data = GDAL_DIR / 'data' / 'proj'
+elif (SPATIALITE_DIR / 'libgeos_c.dll').is_file():
+    GEOS_LIBRARY_PATH = str(SPATIALITE_DIR / 'libgeos_c.dll')
+    _proj_data = SPATIALITE_DIR
+
+if _proj_data and _proj_data.is_dir():
+    os.environ.setdefault('PROJ_DATA', str(_proj_data))
+    os.environ.setdefault('PROJ_LIB', str(_proj_data))
 
 
 # Quick-start development settings - unsuitable for production
@@ -37,6 +75,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.gis',
     'rest_framework',
     'barbers',
     'clients',
@@ -78,7 +117,7 @@ WSGI_APPLICATION = 'barberapp.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
+        'ENGINE': 'django.contrib.gis.db.backends.spatialite',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }

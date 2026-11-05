@@ -13,11 +13,15 @@ import {
   Star,
 } from 'lucide-react'
 import { mockApi } from '../api/mockApi'
+import { useAuth } from '../auth/AuthContext'
 import { Avatar, Badge, Cover, EmptyState, Rating, Skeleton } from '../components/ui'
 import { useToast } from '../ui/ToastContext'
 import { durationLabel, formatPrice } from '../lib/date'
 import { distanceKm, formatDistance, USER_LOCATION } from '../lib/geo'
+import { canRequestService } from '../lib/services'
+import { useUserLocation } from '../lib/useUserLocation'
 import { cn } from '../lib/cn'
+import { shopTypeLabel, shopTypeShortLabel } from '../data/barbershops'
 import type { Barbershop } from '../data/barbershops'
 
 const weekdays = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
@@ -25,6 +29,8 @@ const weekdays = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes
 export function BarbershopPage() {
   const { id } = useParams<{ id: string }>()
   const { toast } = useToast()
+  const { user } = useAuth()
+  const { coords } = useUserLocation()
   const [shop, setShop] = useState<Barbershop | null>(null)
   const [loading, setLoading] = useState(true)
   const [favorite, setFavorite] = useState(false)
@@ -86,7 +92,7 @@ export function BarbershopPage() {
       <div className="px-4 py-16">
         <EmptyState
           icon={<Scissors className="size-5" />}
-          title="Barbería no encontrada"
+          title="Peluquería no encontrada"
           message="Puede que el enlace ya no esté disponible."
           action={
             <Link to="/" className="text-sm font-semibold text-brand-700 underline underline-offset-4">
@@ -98,12 +104,17 @@ export function BarbershopPage() {
     )
   }
 
-  const distance = distanceKm(USER_LOCATION.lat, USER_LOCATION.lng, shop.lat, shop.lng)
+  const origin = coords ?? USER_LOCATION
+  const distance = distanceKm(origin.lat, origin.lng, shop.lat, shop.lng)
   const days = [1, 2, 3, 4, 5, 6].filter((day) => !shop.closedDays.includes(day))
+  const visibleServices = shop.services.filter((service) => canRequestService(service, user))
+  const minPrice = visibleServices.length
+    ? Math.min(...visibleServices.map((service) => service.price))
+    : Math.min(...shop.services.map((service) => service.price))
 
   return (
     <div className="pb-32">
-      <Cover src={shop.cover} alt={`Barbería ${shop.name}`} name={shop.name} className="h-72">
+      <Cover src={shop.cover} alt={`Interior de ${shop.name}`} name={shop.name} className="h-72">
         <div className="absolute inset-x-0 top-0 flex items-center justify-between p-3 safe-top">
           <Link
             to="/"
@@ -125,7 +136,7 @@ export function BarbershopPage() {
             <button
               type="button"
               onClick={() => void share()}
-              aria-label="Compartir barbería"
+              aria-label="Compartir peluquería"
               className="grid size-10 place-items-center rounded-full bg-ink-950/40 text-white backdrop-blur transition hover:bg-ink-950/60"
             >
               <Share2 className="size-5" aria-hidden />
@@ -139,6 +150,9 @@ export function BarbershopPage() {
               <span className={cn('size-1.5 rounded-full', openNow ? 'bg-emerald-500 animate-dot' : 'bg-ink-400')} aria-hidden />
               {openNow ? 'Abierto ahora' : 'Cerrado ahora'}
             </Badge>
+            <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
+              {shopTypeShortLabel(shop.shopType)}
+            </span>
             <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
               {'€'.repeat(shop.priceLevel)}
             </span>
@@ -159,7 +173,9 @@ export function BarbershopPage() {
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-ink-800">{shop.address}</p>
-            <p className="text-xs text-ink-500">{shop.city} · Madrid</p>
+            <p className="text-xs text-ink-500">
+              {shop.city} · {shopTypeLabel(shop.shopType)}
+            </p>
           </div>
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
             <BadgeCheck className="size-3.5" aria-hidden />
@@ -189,10 +205,12 @@ export function BarbershopPage() {
         <section className="mt-6">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-ink-900">Servicios</h2>
-            <span className="text-[11px] font-medium text-ink-500">{shop.services.length} disponibles</span>
+            <span className="text-[11px] font-medium text-ink-500">
+              {visibleServices.length} servicios
+            </span>
           </div>
           <div className="mt-3 divide-y divide-ink-100 overflow-hidden rounded-3xl bg-white ring-1 ring-ink-200/70">
-            {shop.services.map((service) => (
+            {visibleServices.map((service) => (
               <Link
                 key={service.id}
                 to={`/barberia/${shop.id}/reservar?servicio=${service.id}`}
@@ -268,7 +286,7 @@ export function BarbershopPage() {
           </dl>
           <p className="mt-3 flex items-center gap-1.5 border-t border-ink-100 pt-3 text-[11px] text-ink-500">
             <Scissors className="size-3.5" aria-hidden />
-            {shop.barbers.length} barberos · Reserva con cancelación gratuita
+            {shop.barbers.length} profesionales · Reserva con cancelación gratuita
           </p>
         </section>
       </div>
@@ -278,7 +296,7 @@ export function BarbershopPage() {
           <div className="min-w-0">
             <p className="text-[11px] text-ink-500">Desde</p>
             <p className="text-lg font-extrabold leading-none text-ink-900">
-              {formatPrice(Math.min(...shop.services.map((service) => service.price)))}
+              {formatPrice(minPrice)}
             </p>
           </div>
           <Link
