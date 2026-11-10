@@ -9,17 +9,18 @@ export type User = {
   phone: string
   role: Role
   /**
-   * Género autodeclarado en el registro. Es opcional para no romper sesiones
-   * antiguas guardadas en localStorage; sin él, los servicios de barba
+   * Género autodeclarado en el registro. Sin él, los servicios de barba
    * (solo para hombres) no están disponibles.
    */
   gender?: Gender
   /** Solo si role === 'barbero' */
   barberId?: string
   barbershopId?: string
+  barbershopName?: string
+  speciality?: string
+  rating?: number
+  years?: number
 }
-
-export type StoredUser = User & { password: string }
 
 export type BookingStatus = 'pendiente' | 'confirmada' | 'completada' | 'cancelada'
 
@@ -38,6 +39,12 @@ export type Booking = {
   status: BookingStatus
   notes?: string
   createdAt: string
+  /** Datos visibles que devuelve la API para no depender del catálogo local. */
+  barbershopName?: string
+  barbershopCover?: string
+  barberName?: string
+  serviceName?: string
+  serviceDurationMin?: number
 }
 
 export type BookingDraft = Omit<Booking, 'id' | 'status' | 'createdAt'>

@@ -59,6 +59,8 @@ backend/.gdal/
 *.pem
 *.key
 *.p12
+# Notas locales de cuentas de prueba: nunca se suben al repositorio público
+frontend/cuentas.txt
 
 # ---------- Logs ----------
 *.log

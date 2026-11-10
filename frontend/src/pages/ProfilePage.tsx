@@ -5,13 +5,11 @@ import {
   CalendarCheck2,
   ChevronRight,
   CircleHelp,
-  Database,
   LogOut,
   Scissors,
   ShieldCheck,
   Smartphone,
   Store,
-  Trash2,
 } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { useBookings } from '../store/BookingsContext'
@@ -19,7 +17,6 @@ import { PageHeader } from '../components/AppShell'
 import { Avatar, Badge, Button, Sheet, Switch } from '../components/ui'
 import { InstallButton } from '../pwa/InstallPrompt'
 import { useToast } from '../ui/ToastContext'
-import { findBarbershop } from '../data/barbershops'
 import { toISODate } from '../lib/date'
 
 export function ProfilePage() {
@@ -55,7 +52,7 @@ export function ProfilePage() {
     }
   }, [bookings, user, today])
 
-  const shop = user?.barbershopId ? findBarbershop(user.barbershopId) : undefined
+  const shopName = user?.barbershopName
 
   const handleLogout = () => {
     logout()
@@ -79,18 +76,18 @@ export function ProfilePage() {
                 <p className="truncate text-xs text-white/60">{user.email}</p>
                 <p className="truncate text-[11px] text-white/60">{user.phone}</p>
                 <Badge tone="brand" className="mt-2 bg-brand-500/20 text-brand-300">
-                  {user.role === 'barbero' ? 'Barbero' : 'Cliente'}
+                  {user.role === 'barbero' ? 'Barbero/a' : 'Cliente'}
                 </Badge>
               </div>
             </div>
 
-            {user.role === 'barbero' && shop ? (
+            {user.role === 'barbero' && shopName ? (
               <Link
                 to="/agenda"
                 className="mt-4 flex items-center gap-2 rounded-2xl bg-white/10 px-3 py-2.5 text-xs font-semibold text-white/90 ring-1 ring-white/10 transition hover:bg-white/15"
               >
                 <Store className="size-4 text-brand-400" aria-hidden />
-                <span className="truncate">{shop.name}</span>
+                <span className="truncate">{shopName}</span>
                 <ChevronRight className="ml-auto size-4 text-white/40" aria-hidden />
               </Link>
             ) : null}
@@ -188,29 +185,15 @@ export function ProfilePage() {
           <button
             type="button"
             onClick={() =>
-              toast('Tus datos de demo se guardan solo en este navegador (localStorage).', 'info')
+              toast('Tus citas y tu cuenta se guardan en el servidor de BarberApp.', 'info')
             }
-            className="flex w-full items-center gap-3 border-b border-ink-100 px-4 py-3.5 text-left transition hover:bg-ink-50"
+            className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover:bg-ink-50"
           >
             <span className="grid size-9 place-items-center rounded-xl bg-ink-100 text-ink-700">
               <ShieldCheck className="size-4" aria-hidden />
             </span>
             <span className="flex-1 text-sm font-semibold text-ink-900">Privacidad y datos</span>
             <ChevronRight className="size-4 text-ink-400" aria-hidden />
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              localStorage.removeItem('barberapp.bookings.v1')
-              toast('Reservas de demo restablecidas al recargar', 'info')
-            }}
-            className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover:bg-ink-50"
-          >
-            <span className="grid size-9 place-items-center rounded-xl bg-ink-100 text-ink-700">
-              <Database className="size-4" aria-hidden />
-            </span>
-            <span className="flex-1 text-sm font-semibold text-ink-900">Restablecer datos de demo</span>
-            <Trash2 className="size-4 text-ink-400" aria-hidden />
           </button>
         </section>
 
@@ -232,7 +215,7 @@ export function ProfilePage() {
             BarberApp · v0.1.0
           </p>
           <p className="text-[10px] leading-relaxed text-ink-400">
-            Proyecto de demostración (PWA). Frontend con datos ficticios locales.
+            Proyecto de demostración (PWA). Datos ficticios en Django + SpatiaLite.
           </p>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { mockApi } from '../api/mockApi'
+import { api } from '../api/api'
+import { useAuth } from '../auth/AuthContext'
 import type { Booking, BookingDraft, BookingStatus } from '../types'
 
 type BookingsContextValue = {
@@ -15,32 +16,46 @@ type BookingsContextValue = {
 const BookingsContext = createContext<BookingsContextValue | null>(null)
 
 export function BookingsProvider({ children }: { children: ReactNode }) {
+  const { user, ready } = useAuth()
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
-    const result = await mockApi.bookings()
-    setBookings(result)
-    setLoading(false)
+    try {
+      const result = await api.bookings()
+      setBookings(result)
+    } catch {
+      // La sesión o el backend pueden fallar: no dejamos la app bloqueada.
+      setBookings([])
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => {
+    if (!ready) return
+    if (!user) {
+      setBookings([])
+      setLoading(false)
+      return
+    }
+    setLoading(true)
     void refresh()
-  }, [refresh])
+  }, [ready, user?.id, refresh])
 
   const createBooking = useCallback(async (draft: BookingDraft) => {
-    const created = await mockApi.createBooking(draft)
+    const created = await api.createBooking(draft)
     setBookings((current) => [created, ...current])
     return created
   }, [])
 
   const cancelBooking = useCallback(async (id: string) => {
-    const updated = await mockApi.cancelBooking(id)
+    const updated = await api.updateBookingStatus(id, 'cancelada')
     setBookings((current) => current.map((booking) => (booking.id === id ? updated : booking)))
   }, [])
 
   const updateStatus = useCallback(async (id: string, status: BookingStatus) => {
-    const updated = await mockApi.updateBookingStatus(id, status)
+    const updated = await api.updateBookingStatus(id, status)
     setBookings((current) => current.map((booking) => (booking.id === id ? updated : booking)))
   }, [])
 

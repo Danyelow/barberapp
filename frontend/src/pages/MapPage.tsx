@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowUpRight, List, Loader2, LocateFixed, MapPin, Navigation, X } from 'lucide-react'
-import { mockApi } from '../api/mockApi'
+import { api } from '../api/api'
 import { useAuth } from '../auth/AuthContext'
 import { MapView } from '../components/MapView'
 import { Rating, Skeleton } from '../components/ui'
@@ -22,11 +22,18 @@ export function MapPage() {
 
   useEffect(() => {
     let alive = true
-    void mockApi.listShops().then((result) => {
-      if (!alive) return
-      setShops(result)
-      setLoading(false)
-    })
+    void api
+      .listShops()
+      .then((result) => {
+        if (!alive) return
+        setShops(result)
+        setLoading(false)
+      })
+      .catch(() => {
+        if (!alive) return
+        setShops([])
+        setLoading(false)
+      })
     return () => {
       alive = false
     }

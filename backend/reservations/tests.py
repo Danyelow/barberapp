@@ -13,13 +13,16 @@ class ReservationGenderRuleTests(TestCase):
 
     def setUp(self):
         self.shop = BarberShop.objects.create(name='Barbería de prueba')
-        self.barber = Barber.objects.create_user(username='barbero-prueba')
+        self.barber = Barber.objects.create_user(
+            email='barbero-prueba@test.dev',
+            shop=self.shop,
+        )
         self.woman = Client.objects.create_user(
-            username='clienta-prueba',
+            email='clienta-prueba@test.dev',
             gender=Client.Gender.WOMAN,
         )
         self.man = Client.objects.create_user(
-            username='cliente-prueba',
+            email='cliente-prueba@test.dev',
             gender=Client.Gender.MAN,
         )
         self.beard_shave = HaircutType.objects.create(
@@ -58,3 +61,19 @@ class ReservationGenderRuleTests(TestCase):
 
     def test_woman_can_book_a_regular_haircut(self):
         self.reservation(self.woman, self.haircut).full_clean()
+
+    def test_overlapping_reservations_for_same_barber_are_rejected(self):
+        first = self.reservation(self.man, self.haircut)
+        first.full_clean()
+        first.save()
+
+        overlapping = Reservation(
+            client=self.woman,
+            barber=self.barber,
+            shop=self.shop,
+            haircut_type=self.haircut,
+            date=date(2026, 11, 10),
+            time=time(10, 15),
+        )
+        with self.assertRaises(ValidationError):
+            overlapping.full_clean()

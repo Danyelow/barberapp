@@ -170,8 +170,8 @@ export function RegisterPage() {
             </Button>
 
             <p className="text-center text-[11px] leading-relaxed text-ink-400">
-              Proyecto de demostración: la cuenta se guarda solo en este navegador. No introduzcas
-              datos personales reales.
+              Proyecto de demostración: la cuenta se guarda en el servidor de BarberApp. No
+              introduzcas datos personales reales.
             </p>
           </form>
 

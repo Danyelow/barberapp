@@ -57,7 +57,16 @@ export default defineConfig({
     // Si el puerto está ocupado, falla en vez de cambiar a otro (evita "localhost:5173 no responde")
     strictPort: true,
     proxy: {
-      // Cuando exista la API (Django) las llamadas /api/* se reenviarán aquí
+      // La API real vive en Django; Vite la expone en el mismo origen.
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
+  },
+  preview: {
+    port: 4173,
+    proxy: {
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,

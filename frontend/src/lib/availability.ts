@@ -6,45 +6,40 @@ export type Slot = {
   available: boolean
 }
 
-/** Hash determinista para simular ocupación realista por barbero y fecha. */
-const hash = (value: string) => {
-  let result = 0
-  for (let index = 0; index < value.length; index += 1) {
-    result = (result * 31 + value.charCodeAt(index)) % 100000
-  }
-  return result
+export type BusySlot = {
+  time: string
+  durationMin: number
 }
 
 type AvailabilityInput = {
   shop: Barbershop
-  barberId: string
   date: Date
   durationMin: number
-  /** Horas ya ocupadas ("10:30") de ese barbero en esa fecha. */
-  takenTimes: string[]
+  /** Citas ya ocupadas de ese barbero/a en esa fecha, con su duración real. */
+  busy: BusySlot[]
 }
 
 export const SLOT_STEP_MIN = 30
 
-export const getSlots = ({ shop, barberId, date, durationMin, takenTimes }: AvailabilityInput): Slot[] => {
+export const getSlots = ({ shop, date, durationMin, busy }: AvailabilityInput): Slot[] => {
   const iso = toISODate(date)
   if (shop.closedDays.includes(date.getDay())) return []
   if (iso < toISODate(new Date())) return []
 
   const open = timeToMinutes(shop.opensAt)
   const close = timeToMinutes(shop.closesAt)
-  const taken = new Set(takenTimes.map(timeToMinutes))
   const slots: Slot[] = []
 
   for (let start = open; start + durationMin <= close; start += SLOT_STEP_MIN) {
     const time = minutesToTime(start)
-    const conflict = [...taken].some(
-      (busyStart) => start < busyStart + durationMin && busyStart < start + durationMin,
-    )
-    const simulatedBusy = hash(`${barberId}-${iso}-${time}`) % 7 === 0
+    const conflict = busy.some((item) => {
+      const busyStart = timeToMinutes(item.time)
+      const busyDuration = Math.max(item.durationMin, 1)
+      return start < busyStart + busyDuration && busyStart < start + durationMin
+    })
     const past = isPast(iso, time)
 
-    slots.push({ time, available: !conflict && !simulatedBusy && !past })
+    slots.push({ time, available: !conflict && !past })
   }
 
   return slots

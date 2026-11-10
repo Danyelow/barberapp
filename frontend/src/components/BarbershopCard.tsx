@@ -3,7 +3,7 @@ import { Clock, MapPin } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { shopTypeShortLabel } from '../data/barbershops'
 import type { Barbershop } from '../data/barbershops'
-import { formatPrice } from '../lib/date'
+import { formatPrice, timeToMinutes } from '../lib/date'
 import { distanceKm, formatDistance, USER_LOCATION } from '../lib/geo'
 import type { Coordinates } from '../lib/geo'
 import { canRequestService } from '../lib/services'
@@ -19,14 +19,19 @@ export function BarbershopCard({
   const { user } = useAuth()
   const availableServices = shop.services.filter((service) => canRequestService(service, user))
   const priceSource = availableServices.length ? availableServices : shop.services
-  const minPrice = Math.min(...priceSource.map((service) => service.price))
+  const minPrice = priceSource.length ? Math.min(...priceSource.map((service) => service.price)) : 0
   const tags =
-    user?.gender === 'mujer'
+    user?.gender !== 'hombre'
       ? shop.tags.filter((tag) => !/barba|afeita|navaja/i.test(tag))
       : shop.tags
   const origin = location ?? USER_LOCATION
   const distance = distanceKm(origin.lat, origin.lng, shop.lat, shop.lng)
-  const isOpen = !shop.closedDays.includes(new Date().getDay())
+  const now = new Date()
+  const nowMinutes = now.getHours() * 60 + now.getMinutes()
+  const isOpen =
+    !shop.closedDays.includes(now.getDay()) &&
+    nowMinutes >= timeToMinutes(shop.opensAt) &&
+    nowMinutes < timeToMinutes(shop.closesAt)
 
   return (
     <Link

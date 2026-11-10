@@ -12,7 +12,7 @@ import {
   Share2,
   Star,
 } from 'lucide-react'
-import { mockApi } from '../api/mockApi'
+import { api } from '../api/api'
 import { useAuth } from '../auth/AuthContext'
 import { Avatar, Badge, Cover, EmptyState, Rating, Skeleton } from '../components/ui'
 import { useToast } from '../ui/ToastContext'
@@ -39,11 +39,18 @@ export function BarbershopPage() {
     let alive = true
     setLoading(true)
     if (!id) return
-    void mockApi.getShop(id).then((result) => {
-      if (!alive) return
-      setShop(result)
-      setLoading(false)
-    })
+    void api
+      .getShop(id)
+      .then((result) => {
+        if (!alive) return
+        setShop(result)
+        setLoading(false)
+      })
+      .catch(() => {
+        if (!alive) return
+        setShop(null)
+        setLoading(false)
+      })
     return () => {
       alive = false
     }

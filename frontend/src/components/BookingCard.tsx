@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { CalendarPlus, Phone, RotateCcw, X } from 'lucide-react'
-import { findBarber, findBarbershop, findService } from '../data/barbershops'
 import { formatLongDate, formatPrice } from '../lib/date'
 import type { Booking, BookingStatus } from '../types'
 import { StatusBadge } from './StatusBadge'
@@ -15,11 +14,10 @@ type BookingCardProps = {
 }
 
 export function BookingCard({ booking, role = 'cliente', busy = false, onCancel, onStatus }: BookingCardProps) {
-  const shop = findBarbershop(booking.barbershopId)
-  const service = findService(booking.barbershopId, booking.serviceId)
-  const barber = findBarber(booking.barbershopId, booking.barberId)
-
-  if (!shop || !service || !barber) return null
+  const shopName = booking.barbershopName ?? 'Peluquería'
+  const serviceName = booking.serviceName ?? 'Servicio'
+  const barberName = booking.barberName ?? 'Profesional'
+  const serviceDuration = booking.serviceDurationMin ?? booking.durationMin
 
   const [year, month, day] = booking.date.split('-')
   const monthLabel = new Intl.DateTimeFormat('es-ES', { month: 'short' })
@@ -27,6 +25,7 @@ export function BookingCard({ booking, role = 'cliente', busy = false, onCancel,
     .replace('.', '')
   const isUpcoming = booking.status === 'pendiente' || booking.status === 'confirmada'
   const isBarber = role === 'barbero'
+  const canRepeat = Boolean(booking.serviceId && booking.barberId)
 
   return (
     <article className="overflow-hidden rounded-3xl bg-white ring-1 ring-ink-200/70">
@@ -41,17 +40,17 @@ export function BookingCard({ booking, role = 'cliente', busy = false, onCancel,
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <h3 className="truncate text-[15px] font-bold text-ink-900">
-                {isBarber ? booking.customerName : shop.name}
+                {isBarber ? booking.customerName : shopName}
               </h3>
               <p className="mt-0.5 truncate text-xs text-ink-500">
-                {service.name} · {service.durationMin} min
+                {serviceName} · {serviceDuration} min
               </p>
             </div>
             <StatusBadge status={booking.status} />
           </div>
 
           <div className="mt-3 flex items-center gap-2.5">
-            <Avatar name={isBarber ? booking.customerName : barber.name} size="sm" />
+            <Avatar name={isBarber ? booking.customerName : barberName} size="sm" />
             <div className="min-w-0 text-xs text-ink-600">
               {isBarber ? (
                 <a
@@ -63,7 +62,7 @@ export function BookingCard({ booking, role = 'cliente', busy = false, onCancel,
                 </a>
               ) : (
                 <p className="truncate">
-                  Con <span className="font-semibold text-ink-800">{barber.name}</span>
+                  Con <span className="font-semibold text-ink-800">{barberName}</span>
                 </p>
               )}
               <p className="truncate text-ink-500">{formatLongDate(booking.date)}</p>
@@ -104,21 +103,27 @@ export function BookingCard({ booking, role = 'cliente', busy = false, onCancel,
         ) : (
           <>
             {isUpcoming ? (
-              <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50" disabled={busy} onClick={() => onCancel?.(booking)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-red-600 hover:bg-red-50"
+                disabled={busy}
+                onClick={() => onCancel?.(booking)}
+              >
                 <X className="size-3.5" aria-hidden />
                 Cancelar cita
               </Button>
-            ) : (
+            ) : canRepeat ? (
               <Link
-                to={`/barberia/${shop.id}/reservar?servicio=${service.id}&barbero=${barber.id}`}
+                to={`/barberia/${booking.barbershopId}/reservar?servicio=${booking.serviceId}&barbero=${booking.barberId}`}
                 className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-ink-800 transition hover:bg-ink-100"
               >
                 <RotateCcw className="size-3.5" aria-hidden />
                 Reservar otra vez
               </Link>
-            )}
+            ) : null}
             <Link
-              to={`/barberia/${shop.id}`}
+              to={`/barberia/${booking.barbershopId}`}
               className="ml-auto inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-ink-700 transition hover:bg-ink-100"
             >
               <CalendarPlus className="size-3.5" aria-hidden />

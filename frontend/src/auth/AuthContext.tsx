@@ -1,18 +1,12 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { mockApi } from '../api/mockApi'
-import type { Gender, User } from '../types'
-
-type RegisterInput = {
-  name: string
-  email: string
-  phone: string
-  password: string
-  gender: Gender
-}
+import { api } from '../api/api'
+import type { RegisterInput } from '../api/api'
+import type { User } from '../types'
 
 type AuthContextValue = {
   user: User | null
+  ready: boolean
   login: (email: string, password: string) => Promise<User>
   register: (input: RegisterInput) => Promise<User>
   logout: () => void
@@ -21,29 +15,48 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => mockApi.restoreSession())
+  const [user, setUser] = useState<User | null>(null)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    void api.restoreSession().then((nextUser) => {
+      if (!alive) return
+      setUser(nextUser)
+      setReady(true)
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleUnauthorized = () => setUser(null)
+    window.addEventListener('barberapp:unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('barberapp:unauthorized', handleUnauthorized)
+  }, [])
 
   const login = useCallback(async (email: string, password: string) => {
-    const nextUser = await mockApi.login(email, password)
+    const nextUser = await api.login(email, password)
     setUser(nextUser)
     return nextUser
   }, [])
 
-  const register = useCallback(
-    async (input: RegisterInput) => {
-      const nextUser = await mockApi.register(input)
-      setUser(nextUser)
-      return nextUser
-    },
-    [],
-  )
+  const register = useCallback(async (input: RegisterInput) => {
+    const nextUser = await api.register(input)
+    setUser(nextUser)
+    return nextUser
+  }, [])
 
   const logout = useCallback(() => {
-    mockApi.logout()
+    void api.logout()
     setUser(null)
   }, [])
 
-  const value = useMemo(() => ({ user, login, register, logout }), [user, login, register, logout])
+  const value = useMemo(
+    () => ({ user, ready, login, register, logout }),
+    [user, ready, login, register, logout],
+  )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

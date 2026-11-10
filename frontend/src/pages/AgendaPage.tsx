@@ -7,7 +7,6 @@ import { BookingCard } from '../components/BookingCard'
 import { PageHeader } from '../components/AppShell'
 import { Avatar, Badge, Button, EmptyState, Sheet } from '../components/ui'
 import { useToast } from '../ui/ToastContext'
-import { findBarbershop } from '../data/barbershops'
 import { formatPrice, toISODate } from '../lib/date'
 import { cn } from '../lib/cn'
 import type { Booking, BookingStatus } from '../types'
@@ -23,8 +22,7 @@ export function AgendaPage() {
   const [busyId, setBusyId] = useState<string | null>(null)
 
   const today = toISODate(new Date())
-  const shop = user?.barbershopId ? findBarbershop(user.barbershopId) : undefined
-  const barber = shop?.barbers.find((item) => item.id === user?.barberId)
+  const shopName = user?.barbershopName ?? 'Sin peluquería'
 
   const mine = useMemo(
     () => bookings.filter((booking) => booking.barberId === user?.barberId),
@@ -66,11 +64,15 @@ export function AgendaPage() {
     .filter((booking) => booking.status === 'completada')
     .reduce((total, booking) => total + booking.price, 0)
 
-  if (user && user.role !== 'barbero') {
+  if (!user) {
+    return <Navigate to="/entrar" replace />
+  }
+
+  if (user.role !== 'barbero') {
     return <Navigate to="/citas" replace />
   }
 
-  if (!shop || !barber) {
+  if (!user.barbershopId) {
     return (
       <div className="pb-28">
         <PageHeader title="Agenda" subtitle="Panel del barbero" />
@@ -126,24 +128,24 @@ export function AgendaPage() {
     <div className="pb-28">
       <PageHeader
         title="Agenda"
-        subtitle={shop.name}
+        subtitle={shopName}
         action={
           <Badge tone="brand">
             <span className="size-1.5 rounded-full bg-current animate-dot" aria-hidden />
-            Barbero
+            Barbero/a
           </Badge>
         }
       />
 
       <div className="space-y-4 px-4 pt-4">
         <section className="flex items-center gap-3 rounded-3xl bg-ink-900 p-4 text-white">
-          <Avatar name={barber.name} size="lg" className="ring-2 ring-white/20" />
+          <Avatar name={user.name} size="lg" className="ring-2 ring-white/20" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-base font-bold">{barber.name}</p>
+            <p className="truncate text-base font-bold">{user.name}</p>
             <p className="truncate text-xs text-white/60">
-              {barber.specialty} · ★ {barber.rating.toFixed(1)}
+              {user.speciality || 'Profesional'} · ★ {user.rating?.toFixed(1) ?? '—'}
             </p>
-            <p className="mt-0.5 truncate text-[11px] text-brand-400">{shop.name}</p>
+            <p className="mt-0.5 truncate text-[11px] text-brand-400">{shopName}</p>
           </div>
         </section>
 

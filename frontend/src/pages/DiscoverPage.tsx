@@ -10,12 +10,11 @@ import {
   Sparkles,
   X,
 } from 'lucide-react'
-import { mockApi } from '../api/mockApi'
+import { api } from '../api/api'
 import { useAuth } from '../auth/AuthContext'
 import { BarbershopCard } from '../components/BarbershopCard'
 import { useBookings } from '../store/BookingsContext'
-import { findBarbershop, findService } from '../data/barbershops'
-import { formatPrice, relativeDayLabel } from '../lib/date'
+import { formatPrice, relativeDayLabel, toISODate } from '../lib/date'
 import { distanceKm, USER_LOCATION } from '../lib/geo'
 import { useUserLocation } from '../lib/useUserLocation'
 import { cn } from '../lib/cn'
@@ -28,6 +27,7 @@ const shopTypeFilters: { id: ShopTypeFilter; label: string }[] = [
   { id: 'todos', label: 'Todas' },
   { id: 'hombres', label: 'Hombres' },
   { id: 'mujeres', label: 'Mujeres' },
+  { id: 'unisex', label: 'Unisex' },
 ]
 
 export function DiscoverPage() {
@@ -44,11 +44,18 @@ export function DiscoverPage() {
     setLoading(true)
     const timer = setTimeout(
       () => {
-        void mockApi.listShops(query).then((result) => {
-          if (!alive) return
-          setShops(result)
-          setLoading(false)
-        })
+        void api
+          .listShops(query)
+          .then((result) => {
+            if (!alive) return
+            setShops(result)
+            setLoading(false)
+          })
+          .catch(() => {
+            if (!alive) return
+            setShops([])
+            setLoading(false)
+          })
       },
       query.trim() ? 220 : 0,
     )
@@ -75,11 +82,13 @@ export function DiscoverPage() {
       ? 'peluquerías'
       : shopType === 'hombres'
         ? 'peluquerías de hombres'
-        : 'peluquerías de mujeres'
+        : shopType === 'mujeres'
+          ? 'peluquerías de mujeres'
+          : 'peluquerías unisex'
 
   const nextBooking = useMemo(() => {
     if (!user || user.role !== 'cliente') return null
-    const today = new Date().toISOString().slice(0, 10)
+    const today = toISODate(new Date())
     return bookings
       .filter(
         (booking) =>
@@ -89,9 +98,6 @@ export function DiscoverPage() {
       )
       .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`))[0]
   }, [bookings, user])
-
-  const nextShop = nextBooking ? findBarbershop(nextBooking.barbershopId) : null
-  const nextService = nextBooking ? findService(nextBooking.barbershopId, nextBooking.serviceId) : null
 
   return (
     <div className="pb-28">
@@ -133,7 +139,7 @@ export function DiscoverPage() {
       </header>
 
       <div className="space-y-6 px-4 pt-4">
-        {nextBooking && nextShop ? (
+        {nextBooking ? (
           <Link
             to="/citas"
             className="flex items-center gap-3 rounded-3xl bg-ink-900 p-4 text-white shadow-lg shadow-ink-900/15 transition active:scale-[0.99]"
@@ -146,7 +152,7 @@ export function DiscoverPage() {
                 Tu próxima cita
               </p>
               <p className="truncate text-sm font-semibold">
-                {nextShop.name} · {nextService?.name}
+                {nextBooking.barbershopName} · {nextBooking.serviceName}
               </p>
               <p className="text-xs text-white/60">
                 {relativeDayLabel(nextBooking.date)} a las {nextBooking.time}
@@ -263,7 +269,7 @@ export function DiscoverPage() {
               message={
                 query.trim()
                   ? `No encontramos peluquerías para “${query}”. Prueba con otra zona o servicio.`
-                  : 'No hay peluquerías de este tipo. Prueba con el otro tipo de peluquería.'
+                  : 'No hay peluquerías de este tipo. Prueba con otro filtro.'
               }
               action={
                 <button
@@ -286,7 +292,7 @@ export function DiscoverPage() {
           <h2 className="text-sm font-bold text-ink-900">¿Cómo funciona?</h2>
           <ol className="mt-3 space-y-3">
             {[
-              'Elige peluquería de hombres o de mujeres.',
+              'Elige peluquería de hombres, de mujeres o unisex.',
               'Busca una cerca de ti y revisa sus servicios.',
               'Reserva servicio, profesional, día y hora. Listo.',
             ].map((step, index) => (
@@ -298,10 +304,11 @@ export function DiscoverPage() {
               </li>
             ))}
           </ol>
-          {nextService ? (
+          {nextBooking ? (
             <p className="mt-3 border-t border-ink-100 pt-3 text-xs text-ink-500">
-              Tu próximo servicio: <strong className="text-ink-700">{nextService.name}</strong> ·{' '}
-              {formatPrice(nextService.price)}
+              Tu próximo servicio:{' '}
+              <strong className="text-ink-700">{nextBooking.serviceName}</strong> ·{' '}
+              {formatPrice(nextBooking.price)}
             </p>
           ) : null}
         </section>

@@ -7,16 +7,19 @@ import {
   ChevronLeft,
   Clock,
   Info,
+  Loader2,
   PartyPopper,
   Scissors,
   Star,
   UserRound,
 } from 'lucide-react'
+import { api } from '../api/api'
 import { useAuth } from '../auth/AuthContext'
 import { useBookings } from '../store/BookingsContext'
 import { useToast } from '../ui/ToastContext'
-import { findBarbershop, findService } from '../data/barbershops'
+import type { Barbershop } from '../data/barbershops'
 import { getSlots } from '../lib/availability'
+import type { BusySlot } from '../lib/availability'
 import { canRequestService, RESTRICTED_SERVICE_MESSAGE } from '../lib/services'
 import {
   durationLabel,
@@ -37,10 +40,12 @@ export function BookingPage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { bookings, createBooking } = useBookings()
+  const { createBooking } = useBookings()
   const { toast } = useToast()
 
-  const shop = id ? findBarbershop(id) : undefined
+  const [shop, setShop] = useState<Barbershop | null>(null)
+  const [loadingShop, setLoadingShop] = useState(true)
+  const [busySlots, setBusySlots] = useState<BusySlot[]>([])
   const [step, setStep] = useState(() => {
     if (!params.get('servicio')) return 0
     return params.get('barbero') ? 2 : 1
@@ -53,7 +58,31 @@ export function BookingPage() {
   const [saving, setSaving] = useState(false)
   const [created, setCreated] = useState<Booking | null>(null)
 
-  const service = shop && serviceId ? findService(shop.id, serviceId) : undefined
+  useEffect(() => {
+    let alive = true
+    if (!id) {
+      setLoadingShop(false)
+      return
+    }
+    setLoadingShop(true)
+    void api
+      .getShop(id)
+      .then((result) => {
+        if (!alive) return
+        setShop(result)
+        setLoadingShop(false)
+      })
+      .catch(() => {
+        if (!alive) return
+        setShop(null)
+        setLoadingShop(false)
+      })
+    return () => {
+      alive = false
+    }
+  }, [id])
+
+  const service = shop && serviceId ? shop.services.find((item) => item.id === serviceId) : undefined
   const barber = shop && barberId ? shop.barbers.find((item) => item.id === barberId) : undefined
   const days = useMemo(() => nextDays(14), [])
   const availableServices = useMemo(
@@ -68,32 +97,49 @@ export function BookingPage() {
   // Si se llega por URL con un servicio restringido, no se permite continuar.
   useEffect(() => {
     if (!shop || !serviceId) return
-    const selected = findService(shop.id, serviceId)
+    const selected = shop.services.find((item) => item.id === serviceId)
     if (selected && !canRequestService(selected, user)) {
       setServiceId('')
       setStep(0)
     }
   }, [shop, serviceId, user])
 
+  useEffect(() => {
+    let alive = true
+    if (!shop || !barberId || !date) {
+      setBusySlots([])
+      return
+    }
+    void api
+      .bookedTimes(shop.id, barberId, date)
+      .then((busy) => {
+        if (alive) setBusySlots(busy)
+      })
+      .catch(() => {
+        if (alive) setBusySlots([])
+      })
+    return () => {
+      alive = false
+    }
+  }, [shop?.id, barberId, date])
+
   const slots = useMemo(() => {
     if (!shop || !service || !barberId) return []
-    const takenTimes = bookings
-      .filter(
-        (booking) =>
-          booking.barbershopId === shop.id &&
-          booking.barberId === barberId &&
-          booking.date === date &&
-          booking.status !== 'cancelada',
-      )
-      .map((booking) => booking.time)
     return getSlots({
       shop,
-      barberId,
       date: parseISODate(date),
       durationMin: service.durationMin,
-      takenTimes,
+      busy: busySlots,
     })
-  }, [shop, service, barberId, date, bookings])
+  }, [shop, service, barberId, date, busySlots])
+
+  if (loadingShop) {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-md items-center justify-center bg-stone-50">
+        <Loader2 className="size-7 animate-spin text-ink-500" aria-label="Cargando peluquería" />
+      </div>
+    )
+  }
 
   if (!shop) {
     return (
