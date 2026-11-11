@@ -43,6 +43,8 @@ BARBERAPP/
 │   ├── reservations/       # Reservation + validaciones de negocio
 │   ├── .gdal/              # GDAL/GEOS locales (ignorado por git)
 │   ├── .spatialite/        # SpatiaLite local (ignorado por git)
+│   ├── iniciar.bat         # arranca Django (API + Admin) en Windows
+│   ├── parar.bat           # detiene Django en Windows
 │   ├── manage.py
 │   └── requirements.txt
 ├── frontend/
@@ -67,6 +69,10 @@ BARBERAPP/
 ## Puesta en marcha rápida
 
 Necesitas **dos terminales**: una para Django y otra para Vite.
+
+En Windows, la forma más rápida es hacer doble clic en **`backend/iniciar.bat`** (abre la API y el
+Admin en el puerto 8000) y, en otra ventana, en **`frontend/iniciar.bat`** (abre la app en el 5173).
+Deja las dos ventanas abiertas. `backend/parar.bat` y `frontend/parar.bat` detienen cada servidor.
 
 ### 1. Backend
 
@@ -104,7 +110,8 @@ npm run dev
 
 La app queda en <http://localhost:5173>. En Windows también puedes hacer doble clic en
 `frontend/iniciar.bat` (arranca Vite y abre el navegador) y usar `frontend/parar.bat` para
-detenerlo. El puerto está fijado con `strictPort`.
+detenerlo. Recuerda que la API y el Admin necesitan **`backend/iniciar.bat`** en otra ventana. El
+puerto está fijado con `strictPort`.
 
 Vite reenvía `/api/*` a `http://localhost:8000`, por lo que frontend y API se usan desde el mismo
 origen y no hace falta configurar CORS.

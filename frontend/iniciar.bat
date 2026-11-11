@@ -28,6 +28,8 @@ echo.
 echo  ===============================================
 echo   BarberApp - frontend
 echo   URL: http://localhost:5173
+echo   Admin/API: http://localhost:8000/admin
+echo   Requiere backend\iniciar.bat en otra ventana.
 echo   Deja esta ventana abierta mientras uses la app.
 echo   Para detener el servidor: Ctrl + C
 echo  ===============================================

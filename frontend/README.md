@@ -30,11 +30,12 @@ Este directorio es el **frontend** del proyecto BarberApp. Consume la API real d
 
 ### Opción rápida (Windows)
 
-1. Arranca primero el backend (API/Admin) en el puerto 8000.
+1. Arranca primero el backend (API/Admin) en el puerto 8000. En Windows puedes hacer doble clic en
+   **`../backend/iniciar.bat`**.
 2. Doble clic en **`iniciar.bat`**: comprueba Node, instala dependencias si es la primera vez,
    arranca Vite y abre el navegador en <http://localhost:5173>.
-3. Deja la ventana abierta mientras uses la app. Para detenerlo, pulsa `Ctrl + C` o ejecuta
-   **`parar.bat`**.
+3. Deja las dos ventanas abiertas mientras uses la app. Para detenerlas, pulsa `Ctrl + C` o ejecuta
+   **`parar.bat`** en cada carpeta.
 
 ### Opción manual
 
