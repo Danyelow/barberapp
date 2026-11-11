@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from barbers.models import Barber, BarberShop, HaircutType
+from barbers.models import Barber, BarberShop, HaircutType, Offer
 from clients.models import Client
 from reservations.models import Reservation
 
@@ -51,6 +51,12 @@ class ApiTests(TestCase):
             price=20,
             duration_minutes=30,
         )
+        self.offer = Offer.objects.create(
+            shop=self.shop,
+            title='20 % en tu primer corte',
+            description='Válido de lunes a jueves.',
+            discount_percent=20,
+        )
         self.day = (timezone.localdate() + timedelta(days=2)).isoformat()
 
     def auth(self, email):
@@ -79,6 +85,16 @@ class ApiTests(TestCase):
         self.assertEqual(shops.status_code, 200)
         self.assertEqual(shops.data[0]['shopType'], 'unisex')
         self.assertEqual(shops.data[0]['barbers'][0]['name'], 'Marta Prueba')
+        self.assertEqual(shops.data[0]['offer']['discountPercent'], 20)
+
+    def test_expired_offer_is_not_exposed(self):
+        Offer.objects.filter(pk=self.offer.pk).update(
+            valid_until=timezone.localdate() - timedelta(days=1)
+        )
+        client = self.auth('mujer@test.dev')
+        shops = client.get('/api/shops/')
+        self.assertEqual(shops.status_code, 200)
+        self.assertIsNone(shops.data[0]['offer'])
 
     def test_woman_cannot_book_beard(self):
         client = self.auth('mujer@test.dev')

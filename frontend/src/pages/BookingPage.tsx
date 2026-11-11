@@ -16,6 +16,7 @@ import {
 import { api } from '../api/api'
 import { useAuth } from '../auth/AuthContext'
 import { useBookings } from '../store/BookingsContext'
+import { useViewMode } from '../layout/ViewModeContext'
 import { useToast } from '../ui/ToastContext'
 import type { Barbershop } from '../data/barbershops'
 import { getSlots } from '../lib/availability'
@@ -41,6 +42,7 @@ export function BookingPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { createBooking } = useBookings()
+  const { isDesktop } = useViewMode()
   const { toast } = useToast()
 
   const [shop, setShop] = useState<Barbershop | null>(null)
@@ -135,7 +137,12 @@ export function BookingPage() {
 
   if (loadingShop) {
     return (
-      <div className="mx-auto flex min-h-dvh max-w-md items-center justify-center bg-stone-50">
+      <div
+        className={cn(
+          'mx-auto flex min-h-dvh items-center justify-center bg-stone-50',
+          isDesktop ? 'max-w-4xl' : 'max-w-md',
+        )}
+      >
         <Loader2 className="size-7 animate-spin text-ink-500" aria-label="Cargando peluquería" />
       </div>
     )
@@ -143,7 +150,12 @@ export function BookingPage() {
 
   if (!shop) {
     return (
-      <div className="mx-auto min-h-dvh max-w-md bg-stone-50 px-4 py-16">
+      <div
+        className={cn(
+          'mx-auto min-h-dvh bg-stone-50 px-4 py-16',
+          isDesktop ? 'max-w-4xl' : 'max-w-md',
+        )}
+      >
         <EmptyState
           icon={<Scissors className="size-5" />}
           title="Peluquería no encontrada"
@@ -221,8 +233,20 @@ export function BookingPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-ink-100 md:bg-[radial-gradient(80%_60%_at_50%_0%,#2a2723_0%,#12100e_70%)]">
-      <div className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col bg-stone-50 app-shadow md:max-w-lg">
+    <div
+      className={cn(
+        'min-h-dvh bg-ink-100',
+        isDesktop
+          ? 'bg-stone-100'
+          : 'md:bg-[radial-gradient(80%_60%_at_50%_0%,#2a2723_0%,#12100e_70%)]',
+      )}
+    >
+      <div
+        className={cn(
+          'relative mx-auto flex min-h-dvh w-full flex-col bg-stone-50',
+          isDesktop ? 'max-w-4xl app-shadow' : 'max-w-md app-shadow md:max-w-lg',
+        )}
+      >
         <header className="sticky top-0 z-30 border-b border-ink-200/60 bg-stone-50/90 backdrop-blur-xl safe-top">
           <div className="flex h-14 items-center gap-2 px-3">
             <button
@@ -587,7 +611,7 @@ export function BookingPage() {
         </div>
 
         {!created ? (
-          <div className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-md border-t border-ink-200/70 bg-stone-50/95 px-4 pb-3 pt-3 backdrop-blur-xl safe-bottom md:max-w-lg">
+          <div className="booking-action-bar fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-md border-t border-ink-200/70 bg-stone-50/95 px-4 pb-3 pt-3 backdrop-blur-xl safe-bottom md:max-w-lg">
             <div className="flex items-center gap-3">
               <div className="min-w-0">
                 <p className="text-[11px] text-ink-500">{service ? service.name : 'Sin servicio'}</p>

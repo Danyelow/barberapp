@@ -92,7 +92,7 @@ export function BookingsPage() {
         }
       />
 
-      <div className="space-y-4 px-4 pt-4">
+      <div className="page-container space-y-4 px-4 pt-4">
         <div className="grid grid-cols-2 gap-1 rounded-2xl bg-ink-100 p-1">
           {(
             [
@@ -124,7 +124,7 @@ export function BookingsPage() {
         </div>
 
         {list.length ? (
-          <div className="space-y-3">
+          <div className="card-grid">
             {list.map((booking) => (
               <BookingCard
                 key={booking.id}

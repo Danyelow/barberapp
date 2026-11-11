@@ -208,14 +208,17 @@ const initials = (name: string) =>
 
 export function Avatar({
   name,
+  src,
   size = 'md',
   className,
 }: {
   name: string
+  src?: string | null
   size?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
 }) {
   const tone = avatarTones[(name.charCodeAt(0) + name.length) % avatarTones.length]
+  const [failed, setFailed] = useState(false)
   const sizes = {
     sm: 'size-8 text-[11px]',
     md: 'size-10 text-sm',
@@ -223,17 +226,30 @@ export function Avatar({
     xl: 'size-20 text-2xl',
   }
 
+  useEffect(() => {
+    setFailed(false)
+  }, [src])
+
   return (
     <span
       aria-hidden
       className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-full font-bold ring-1 ring-white/60',
+        'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-bold ring-1 ring-white/60',
         sizes[size],
         tone,
         className,
       )}
     >
-      {initials(name)}
+      {src && !failed ? (
+        <img
+          src={src}
+          alt=""
+          className="size-full object-cover"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        initials(name)
+      )}
     </span>
   )
 }

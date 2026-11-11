@@ -45,6 +45,18 @@ def user_payload(user):
     }
 
 
+def _offer_payload(shop):
+    offer = getattr(shop, 'offer', None)
+    if offer is None or not offer.is_current:
+        return None
+    return {
+        'title': offer.title,
+        'description': offer.description,
+        'discountPercent': offer.discount_percent,
+        'validUntil': offer.valid_until.isoformat() if offer.valid_until else None,
+    }
+
+
 def shop_payload(shop):
     location = shop.location
     lat = location.y if location else 37.3891
@@ -68,6 +80,7 @@ def shop_payload(shop):
         'opensAt': shop.opening_time.strftime('%H:%M') if shop.opening_time else '10:00',
         'closesAt': shop.closing_time.strftime('%H:%M') if shop.closing_time else '20:00',
         'closedDays': shop.closed_day_list,
+        'offer': _offer_payload(shop),
         'services': [
             {
                 'id': str(service.pk),

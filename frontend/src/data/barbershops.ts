@@ -18,6 +18,13 @@ export type Barber = {
   years: number
 }
 
+export type Offer = {
+  title: string
+  description: string
+  discountPercent: number
+  validUntil?: string | null
+}
+
 export type Barbershop = {
   id: string
   name: string
@@ -39,6 +46,8 @@ export type Barbershop = {
   closedDays: number[]
   services: Service[]
   barbers: Barber[]
+  /** Oferta activa devuelta por la API; si no hay, queda vacío o null. */
+  offer?: Offer | null
 }
 
 export const shopTypeLabel = (type: ShopType) => {

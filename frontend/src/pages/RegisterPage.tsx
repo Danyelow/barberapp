@@ -5,6 +5,7 @@ import { ArrowRight, Lock, Mail, Phone, UserRound } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { AuthShell, BrandMark } from '../components/AppShell'
 import { Button, Field, SelectField } from '../components/ui'
+import { ThemeToggle } from '../theme/ThemeToggle'
 import { useToast } from '../ui/ToastContext'
 import type { Gender } from '../types'
 
@@ -76,9 +77,12 @@ export function RegisterPage() {
       <div className="flex min-h-dvh flex-col px-5 safe-top">
         <div className="flex items-center justify-between py-4">
           <BrandMark />
-          <Link to="/entrar" className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-500 hover:bg-ink-100">
-            Ya tengo cuenta
-          </Link>
+          <div className="flex items-center gap-1.5">
+            <ThemeToggle />
+            <Link to="/entrar" className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-500 hover:bg-ink-100">
+              Ya tengo cuenta
+            </Link>
+          </div>
         </div>
 
         <div className="flex-1 pb-10 pt-4">

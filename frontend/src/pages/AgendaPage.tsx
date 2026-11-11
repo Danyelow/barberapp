@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom'
 import { CalendarClock, CheckCircle2, History, Scissors, TrendingUp } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { useBookings } from '../store/BookingsContext'
+import { useProfilePreferences } from '../profile/ProfilePreferencesContext'
 import { BookingCard } from '../components/BookingCard'
 import { PageHeader } from '../components/AppShell'
 import { Avatar, Badge, Button, EmptyState, Sheet } from '../components/ui'
@@ -15,6 +16,7 @@ type Tab = 'hoy' | 'proximas' | 'historial'
 
 export function AgendaPage() {
   const { user } = useAuth()
+  const { photo } = useProfilePreferences()
   const { bookings, updateStatus, cancelBooking } = useBookings()
   const { toast } = useToast()
   const [tab, setTab] = useState<Tab>('hoy')
@@ -137,9 +139,9 @@ export function AgendaPage() {
         }
       />
 
-      <div className="space-y-4 px-4 pt-4">
+      <div className="page-container space-y-4 px-4 pt-4">
         <section className="flex items-center gap-3 rounded-3xl bg-ink-900 p-4 text-white">
-          <Avatar name={user.name} size="lg" className="ring-2 ring-white/20" />
+          <Avatar name={user.name} src={photo} size="lg" className="ring-2 ring-white/20" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-bold">{user.name}</p>
             <p className="truncate text-xs text-white/60">
@@ -196,7 +198,7 @@ export function AgendaPage() {
         </div>
 
         {lists[tab].length ? (
-          <div className="space-y-3">
+          <div className="card-grid">
             {lists[tab].map((booking) => (
               <BookingCard
                 key={booking.id}

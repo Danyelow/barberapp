@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowUpRight, List, Loader2, LocateFixed, MapPin, Navigation, X } from 'lucide-react'
+import { ArrowUpRight, List, Loader2, LocateFixed, MapPin, Navigation, Tag, X } from 'lucide-react'
 import { api } from '../api/api'
 import { useAuth } from '../auth/AuthContext'
 import { MapView } from '../components/MapView'
 import { Rating, Skeleton } from '../components/ui'
 import { formatPrice } from '../lib/date'
 import { distanceKm, formatDistance, USER_LOCATION } from '../lib/geo'
+import { sortShopsByProximity } from '../lib/offers'
 import { canRequestService } from '../lib/services'
 import { useUserLocation } from '../lib/useUserLocation'
 import { shopTypeShortLabel } from '../data/barbershops'
@@ -58,14 +59,10 @@ export function MapPage() {
   )
 
   const origin = coords ?? USER_LOCATION
-  const orderedShops = useMemo(() => {
-    const from = coords ?? USER_LOCATION
-    return [...displayShops].sort(
-      (a, b) =>
-        distanceKm(from.lat, from.lng, a.lat, a.lng) -
-        distanceKm(from.lat, from.lng, b.lat, b.lng),
-    )
-  }, [displayShops, coords])
+  const orderedShops = useMemo(
+    () => sortShopsByProximity(displayShops, coords ?? USER_LOCATION),
+    [displayShops, coords],
+  )
 
   const shop = displayShops.find((item) => item.id === selectedId) ?? null
   const distance = shop ? distanceKm(origin.lat, origin.lng, shop.lat, shop.lng) : 0
@@ -84,7 +81,7 @@ export function MapPage() {
 
   const subline =
     status === 'granted' && coords
-      ? `${shops.length} peluquerías · ordenadas por cercanía`
+      ? `${shops.length} peluquerías · ofertas cercanas primero`
       : locating
         ? 'Permite el acceso para ordenar por cercanía'
         : status === 'denied'
@@ -93,10 +90,10 @@ export function MapPage() {
             ? 'No pudimos ubicarte · mostrando Sevilla'
             : status === 'unsupported'
               ? 'Tu navegador no permite geolocalización'
-              : `${shops.length} peluquerías en el mapa`
+              : `${shops.length} peluquerías en el mapa · ofertas destacadas`
 
   return (
-    <div className="flex h-[calc(100dvh-90px-env(safe-area-inset-bottom))] w-full flex-col overflow-hidden bg-stone-50">
+    <div className="map-page flex h-[calc(100dvh-90px-env(safe-area-inset-bottom))] w-full flex-col overflow-hidden bg-stone-50">
       <div className="z-10 shrink-0 p-3 safe-top">
         <div className="flex items-center gap-2 rounded-2xl bg-white p-2 pl-3 shadow-lg ring-1 ring-ink-200/70">
           <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-ink-900 text-brand-400">
@@ -151,7 +148,7 @@ export function MapPage() {
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-3">
           {shop ? (
-            <div className="pointer-events-auto animate-rise overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-ink-900/10">
+            <div className="map-float-card pointer-events-auto animate-rise overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-ink-900/10">
               <div className="flex gap-3 p-3">
                 <img
                   src={shop.cover}
@@ -182,6 +179,13 @@ export function MapPage() {
                       <X className="size-4" />
                     </button>
                   </div>
+                  {shop.offer ? (
+                    <p className="mt-2 flex items-center gap-1.5 truncate rounded-xl bg-brand-50 px-2 py-1 text-[11px] font-semibold text-brand-800 ring-1 ring-brand-200">
+                      <Tag className="size-3 shrink-0" aria-hidden />
+                      <span className="shrink-0">-{shop.offer.discountPercent}%</span>
+                      <span className="truncate font-medium">{shop.offer.title}</span>
+                    </p>
+                  ) : null}
                   <div className="mt-2 flex items-center gap-2 text-[11px] text-ink-500">
                     <Rating value={shop.rating} count={shop.reviews} className="text-ink-800" />
                     <span aria-hidden>·</span>

@@ -3,7 +3,8 @@
 Aplicación web para localizar peluquerías de **hombres**, de **mujeres** o **unisex** y reservar
 cita. Monorepo con:
 
-- **`frontend/`**: PWA *mobile first* en React 19 + Vite + TypeScript + Tailwind CSS.
+- **`frontend/`**: PWA *mobile first* en React 19 + Vite + TypeScript + Tailwind CSS, con vista PC
+  adaptativa y cambio manual a formato móvil.
 - **`backend/`**: Django 6 + Django REST Framework + **GeoDjango** con **SpatiaLite**.
 
 > **Estado actual:** el frontend consume la API real de Django. La sesión se guarda con un token
@@ -26,10 +27,25 @@ cita. Monorepo con:
 - **Mapa con geolocalización:** al abrir el mapa o el inicio se solicita la ubicación real, se
   ordenan las peluquerías por distancia y se muestran los estados de permiso denegado, error y
   reintento. Si no hay ubicación, se usa el centro de Sevilla como respaldo.
+- **Ofertas destacadas:** algunas peluquerías de demo reciben ofertas aleatorias desde el backend.
+  Se muestran en el inicio, en las tarjetas, en el mapa y en la ficha. Si están a menos de 6 km, las
+  ofertas suben puestos en el orden por cercanía y aparecen en un bloque “Ofertas cerca de ti”.
+- **Tema claro, oscuro o automático:** el tema se elige desde **Perfil → Tema de la app**, desde la
+  barra lateral de la vista PC o desde las pantallas de acceso. La opción **Auto** sigue el tema del
+  dispositivo, el cambio se aplica al instante, se guarda en el navegador y también adapta el mapa y
+  los controles de Leaflet.
+- **Perfil personalizado y recomendaciones:** cada cliente puede añadir una foto de perfil y elegir
+  un servicio preferido. La foto se recorta en cuadrado, se reduce a 320 px y se guarda como JPEG en
+  el navegador. Las recomendaciones usan el catálogo real de la API, respetan la restricción de
+  servicios de barba y ordenan las peluquerías por afinidad con el servicio y por distancia.
+- **Vista PC y móvil:** en pantallas grandes la app usa barra lateral, contenido más ancho y rejillas
+  de tarjetas. Desde **Perfil → Formato de pantalla** (o desde la barra lateral) puedes volver a la
+  vista móvil; la preferencia se guarda en el navegador. La vista PC manual necesita al menos 768 px
+  de ancho.
 - **Reserva validada en servidor:** el backend comprueba horario, día cerrado, solapes, duración y
   restricción de servicios de barba. La disponibilidad se consulta a la API.
-- **Django Admin operativo:** permite crear peluquerías, servicios, profesionales, clientes y
-  reservas. La ubicación se edita sobre un mapa centrado en Sevilla.
+- **Django Admin operativo:** permite crear peluquerías, servicios, ofertas, profesionales, clientes
+  y reservas. La ubicación se edita sobre un mapa centrado en Sevilla.
 
 ## Estructura
 
@@ -151,7 +167,9 @@ Entra en <http://localhost:8000/admin/> con el superusuario que hayas creado.
      que verá el cliente.
    - En **Mapa** haces clic en la ubicación real de Sevilla.
    - En la misma pantalla, al final, puedes añadir sus **servicios** (nombre, precio, duración y
-     casilla **solo para hombres** para barba/afeitado).
+     casilla **solo para hombres** para barba/afeitado) y su **oferta destacada** (título,
+     descripción, porcentaje, estado y fecha límite). También existe el menú **Ofertas** para
+     gestionarlas todas juntas.
 
 2. **Barberos/as** → *Añadir barbero/a*.
    - El **email** será su usuario para entrar en la app.
@@ -190,6 +208,9 @@ Todas las rutas salvo `health`, `login` y `register` requieren `Authorization: B
 | `GET` | `/api/bookings/` | Citas del cliente o de la agenda del barbero |
 | `POST` | `/api/bookings/` | Crear una reserva |
 | `PATCH` | `/api/bookings/<id>/` | Cancelar (cliente) o cambiar estado (barbero) |
+
+Cada peluquería del catálogo incluye un campo `offer` con `title`, `description`,
+`discountPercent` y `validUntil`, o `null` si no tiene una oferta activa.
 
 Los tokens están firmados con `django.core.signing` y caducan a los 30 días. No se usan sesiones de
 Django en la API porque `Client` y `Barber` son modelos separados del `auth.User` que protege el
@@ -262,8 +283,8 @@ cd backend
 python manage.py test
 ```
 
-Cubre autenticación, catálogo, tipos de peluquería, disponibilidad, creación y cancelación de
-reservas, solapes y la regla de negocio de los servicios de barba.
+Cubre autenticación, catálogo, tipos de peluquería, ofertas activas y caducadas, disponibilidad,
+creación y cancelación de reservas, solapes y la regla de negocio de los servicios de barba.
 
 ```bash
 cd frontend
@@ -292,5 +313,8 @@ El build ejecuta el typecheck de TypeScript y genera la PWA.
 - Las notificaciones push quedan como ampliación futura.
 - La geolocalización requiere `https` o `localhost` y permiso del navegador. Si se deniega, la app
   sigue funcionando con el centro de Sevilla como posición de respaldo.
+- La foto de perfil y el servicio preferido son **datos locales del navegador**: no se envían al
+  servidor ni se guardan en la base de datos. Si borras el almacenamiento del sitio o cambias de
+  dispositivo, tendrás que volver a configurarlos.
 - El `docker-compose.yml` actual es PostgreSQL sin PostGIS; para usarlo con GeoDjango habría que
   cambiar la imagen por una de PostGIS y el engine del backend.

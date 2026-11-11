@@ -11,12 +11,13 @@ import {
   Scissors,
   Share2,
   Star,
+  Tag,
 } from 'lucide-react'
 import { api } from '../api/api'
 import { useAuth } from '../auth/AuthContext'
 import { Avatar, Badge, Cover, EmptyState, Rating, Skeleton } from '../components/ui'
 import { useToast } from '../ui/ToastContext'
-import { durationLabel, formatPrice } from '../lib/date'
+import { durationLabel, formatPrice, formatShortDate } from '../lib/date'
 import { distanceKm, formatDistance, USER_LOCATION } from '../lib/geo'
 import { canRequestService } from '../lib/services'
 import { useUserLocation } from '../lib/useUserLocation'
@@ -176,7 +177,7 @@ export function BarbershopPage() {
         </div>
       </Cover>
 
-      <div className="relative -mt-6 rounded-t-[28px] bg-stone-50 px-4 pt-5">
+      <div className="page-container-tight relative -mt-6 rounded-t-[28px] bg-stone-50 px-4 pt-5">
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-ink-800">{shop.address}</p>
@@ -191,6 +192,37 @@ export function BarbershopPage() {
         </div>
 
         <p className="mt-4 text-[13px] leading-relaxed text-ink-600">{shop.description}</p>
+
+        {shop.offer ? (
+          <div className="mt-4 overflow-hidden rounded-3xl bg-gradient-to-br from-ink-900 to-ink-950 p-4 text-white shadow-lg shadow-ink-900/10">
+            <div className="flex items-start gap-3">
+              <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand-500 text-ink-950">
+                <Tag className="size-5" aria-hidden />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-brand-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-brand-300">
+                    Oferta activa
+                  </span>
+                  <span className="rounded-full bg-brand-500 px-2 py-0.5 text-[11px] font-black text-ink-950">
+                    -{shop.offer.discountPercent}%
+                  </span>
+                </div>
+                <p className="mt-1.5 text-sm font-bold leading-tight">{shop.offer.title}</p>
+                {shop.offer.description ? (
+                  <p className="mt-1 text-[12px] leading-snug text-white/65">
+                    {shop.offer.description}
+                  </p>
+                ) : null}
+                {shop.offer.validUntil ? (
+                  <p className="mt-2 text-[11px] font-medium text-brand-300">
+                    Válida hasta el {formatShortDate(shop.offer.validUntil)}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         <div className="mt-4 grid grid-cols-2 gap-2">
           <a
@@ -298,8 +330,8 @@ export function BarbershopPage() {
         </section>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-md border-t border-ink-200/70 bg-stone-50/95 px-4 pb-3 pt-3 backdrop-blur-xl safe-bottom md:max-w-lg">
-        <div className="flex items-center gap-3">
+      <div className="detail-action-bar fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-md border-t border-ink-200/70 bg-stone-50/95 px-4 pb-3 pt-3 backdrop-blur-xl safe-bottom md:max-w-lg">
+        <div className="page-container-tight flex items-center gap-3">
           <div className="min-w-0">
             <p className="text-[11px] text-ink-500">Desde</p>
             <p className="text-lg font-extrabold leading-none text-ink-900">

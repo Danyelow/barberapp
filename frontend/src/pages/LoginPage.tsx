@@ -5,6 +5,7 @@ import { ArrowRight, Mail, Scissors, ShieldCheck, UserRoundPlus } from 'lucide-r
 import { useAuth } from '../auth/AuthContext'
 import { BrandMark, AuthShell } from '../components/AppShell'
 import { Button, Field } from '../components/ui'
+import { ThemeToggle } from '../theme/ThemeToggle'
 import { useToast } from '../ui/ToastContext'
 import type { User } from '../types'
 
@@ -52,6 +53,7 @@ export function LoginPage() {
       <div className="flex min-h-dvh flex-col px-5 safe-top">
         <div className="flex items-center justify-between py-4">
           <BrandMark />
+          <ThemeToggle />
         </div>
 
         <div className="flex-1 pb-10 pt-4">

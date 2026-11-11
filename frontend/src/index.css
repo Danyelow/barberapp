@@ -159,3 +159,421 @@
     animation: none;
   }
 }
+
+/* ---------- Vista PC / móvil ---------- */
+.page-container {
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+}
+
+.page-container-tight {
+  width: 100%;
+  max-width: 980px;
+  margin-inline: auto;
+}
+
+.shop-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.card-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+[data-view='desktop'] .page-container {
+  max-width: 1240px;
+}
+
+[data-view='desktop'] .shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  align-items: start;
+  gap: 1.25rem;
+}
+
+[data-view='desktop'] .card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(390px, 1fr));
+  align-items: start;
+  gap: 0.9rem;
+}
+
+[data-view='desktop'] .auth-content > div {
+  min-height: 100%;
+}
+
+[data-view='desktop'] .detail-action-bar {
+  left: calc(max((100vw - 1600px) / 2, 0px) + 16rem);
+  right: calc(max((100vw - 1600px) / 2, 0px));
+  width: auto;
+  max-width: none;
+  margin-inline: 0;
+}
+
+[data-view='desktop'] .booking-action-bar {
+  left: 50%;
+  right: auto;
+  width: min(calc(100vw - 2rem), 56rem);
+  max-width: none;
+  margin-inline: 0;
+  transform: translateX(-50%);
+}
+
+[data-view='desktop'] .map-page {
+  height: 100dvh;
+}
+
+[data-view='desktop'] .map-page .map-float-card {
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+/* ---------- Tema oscuro ---------- */
+:root {
+  --map-pin-bg: #ffffff;
+  --map-pin-text: #1c1a17;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --map-pin-bg: #2f2a24;
+  --map-pin-text: #f7f2eb;
+  --theme-text: #f7f2eb;
+  --theme-text-secondary: #d8cec1;
+  --theme-text-muted: #a99e90;
+  --theme-text-faint: #8b8175;
+}
+
+[data-theme='dark'] body {
+  background-color: #0f0e0c;
+  color: var(--theme-text);
+}
+
+[data-theme='dark'] .app-shadow {
+  box-shadow: 0 24px 60px -24px rgb(0 0 0 / 0.7);
+}
+
+/* Superficies principales y translúcidas */
+[data-theme='dark'] [class~='bg-stone-100'] {
+  background-color: #0f0e0c;
+}
+
+[data-theme='dark'] [class~='bg-stone-50'] {
+  background-color: #171411;
+}
+
+[data-theme='dark'] [class~='bg-stone-50/85'],
+[data-theme='dark'] [class~='bg-stone-50/90'],
+[data-theme='dark'] [class~='bg-stone-50/95'] {
+  background-color: rgb(23 20 17 / 0.92);
+}
+
+[data-theme='dark'] [class~='bg-stone-200'] {
+  background-color: #3a342d;
+}
+
+[data-theme='dark'] [class~='bg-white'] {
+  background-color: #2f2a24;
+}
+
+[data-theme='dark'] [class~='bg-white/90'] {
+  background-color: rgb(47 42 36 / 0.92);
+}
+
+[data-theme='dark'] [class~='bg-white/95'] {
+  background-color: rgb(47 42 36 / 0.96);
+}
+
+[data-theme='dark'] [class~='bg-white/60'] {
+  background-color: rgb(47 42 36 / 0.62);
+}
+
+[data-theme='dark'] [class~='bg-ink-50'] {
+  background-color: #24201b;
+}
+
+[data-theme='dark'] [class~='bg-ink-50/60'] {
+  background-color: rgb(36 32 27 / 0.6);
+}
+
+[data-theme='dark'] [class~='bg-ink-50/70'] {
+  background-color: rgb(36 32 27 / 0.72);
+}
+
+[data-theme='dark'] [class~='bg-ink-100'] {
+  background-color: #2a2520;
+}
+
+[data-theme='dark'] [class~='bg-ink-200'] {
+  background-color: #3a342d;
+}
+
+[data-theme='dark'] [class~='bg-ink-200/70'] {
+  background-color: rgb(58 52 45 / 0.7);
+}
+
+[data-theme='dark'] [class~='bg-ink-900'] {
+  background-color: #27221d;
+}
+
+/* Tonos de estado y marca */
+[data-theme='dark'] [class~='bg-brand-50'] {
+  background-color: #3a2309;
+}
+
+[data-theme='dark'] [class~='bg-amber-50'] {
+  background-color: rgb(120 78 13 / 0.2);
+}
+
+[data-theme='dark'] [class~='bg-amber-100'] {
+  background-color: #4a3411;
+}
+
+[data-theme='dark'] [class~='bg-emerald-50'] {
+  background-color: rgb(7 111 76 / 0.22);
+}
+
+[data-theme='dark'] [class~='bg-emerald-100'] {
+  background-color: #123d2c;
+}
+
+[data-theme='dark'] [class~='bg-red-50'] {
+  background-color: rgb(127 29 29 / 0.22);
+}
+
+[data-theme='dark'] [class~='bg-rose-100'] {
+  background-color: #45192c;
+}
+
+[data-theme='dark'] [class~='bg-sky-100'] {
+  background-color: #123449;
+}
+
+[data-theme='dark'] [class~='bg-violet-100'] {
+  background-color: #2f2454;
+}
+
+/* Hover de superficies */
+[data-theme='dark'] [class~='hover:bg-ink-50']:hover,
+[data-theme='dark'] [class~='hover:bg-ink-50/70']:hover {
+  background-color: #2c2722;
+}
+
+[data-theme='dark'] [class~='hover:bg-ink-100']:hover {
+  background-color: #342e28;
+}
+
+[data-theme='dark'] [class~='hover:bg-ink-200']:hover,
+[data-theme='dark'] [class~='hover:bg-ink-200/60']:hover {
+  background-color: #423b33;
+}
+
+[data-theme='dark'] [class~='hover:bg-ink-800']:hover {
+  background-color: #3a342d;
+}
+
+[data-theme='dark'] [class~='hover:bg-red-50']:hover {
+  background-color: rgb(127 29 29 / 0.32);
+}
+
+/* Texto */
+[data-theme='dark'] [class~='text-ink-900'],
+[data-theme='dark'] [class~='text-ink-800'],
+[data-theme='dark'] [class~='text-stone-900'] {
+  color: var(--theme-text);
+}
+
+[data-theme='dark'] [class~='text-ink-700'],
+[data-theme='dark'] [class~='text-ink-600'],
+[data-theme='dark'] [class~='text-stone-700'] {
+  color: var(--theme-text-secondary);
+}
+
+[data-theme='dark'] [class~='text-ink-500'],
+[data-theme='dark'] [class~='text-ink-400'] {
+  color: var(--theme-text-muted);
+}
+
+[data-theme='dark'] [class~='text-ink-300'] {
+  color: var(--theme-text-faint);
+}
+
+[data-theme='dark'] [class~='text-brand-900'],
+[data-theme='dark'] [class~='text-brand-800'] {
+  color: #ffd89e;
+}
+
+[data-theme='dark'] [class~='text-brand-700'],
+[data-theme='dark'] [class~='text-brand-600'] {
+  color: #ffb35c;
+}
+
+[data-theme='dark'] [class~='text-emerald-700'],
+[data-theme='dark'] [class~='text-emerald-800'] {
+  color: #8ee0b2;
+}
+
+[data-theme='dark'] [class~='text-amber-700'],
+[data-theme='dark'] [class~='text-amber-800'] {
+  color: #ffd78e;
+}
+
+[data-theme='dark'] [class~='text-red-500'],
+[data-theme='dark'] [class~='text-red-600'],
+[data-theme='dark'] [class~='text-red-700'] {
+  color: #ff9c9c;
+}
+
+[data-theme='dark'] [class~='text-rose-800'] {
+  color: #ffb3d1;
+}
+
+[data-theme='dark'] [class~='text-sky-800'] {
+  color: #a5d8ff;
+}
+
+[data-theme='dark'] [class~='text-violet-800'] {
+  color: #d4c4ff;
+}
+
+[data-theme='dark'] [class~='hover:text-ink-900']:hover,
+[data-theme='dark'] [class~='hover:text-ink-950']:hover,
+[data-theme='dark'] [class~='hover:text-ink-800']:hover {
+  color: var(--theme-text);
+}
+
+[data-theme='dark'] [class~='hover:text-ink-700']:hover {
+  color: var(--theme-text-secondary);
+}
+
+/* Bordes y anillos */
+[data-theme='dark'] [class~='border-ink-100'] {
+  border-color: #2d2823;
+}
+
+[data-theme='dark'] [class~='border-ink-200'],
+[data-theme='dark'] [class~='border-ink-200/60'],
+[data-theme='dark'] [class~='border-ink-200/70'],
+[data-theme='dark'] [class~='border-ink-200/80'] {
+  border-color: #3b342c;
+}
+
+[data-theme='dark'] [class~='border-ink-300'] {
+  border-color: #4a433b;
+}
+
+[data-theme='dark'] [class~='border-ink-900'] {
+  border-color: #f98207;
+}
+
+[data-theme='dark'] [class~='divide-ink-100'] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #2d2823;
+}
+
+[data-theme='dark'] [class*='ring-ink-'] {
+  --tw-ring-color: rgb(255 255 255 / 0.14);
+}
+
+[data-theme='dark'] [class~='ring-ink-900'] {
+  --tw-ring-color: #f98207;
+}
+
+[data-theme='dark'] [class~='ring-ink-900/10'] {
+  --tw-ring-color: rgb(255 255 255 / 0.08);
+}
+
+[data-theme='dark'] [class~='ring-stone-200'] {
+  --tw-ring-color: #3b342c;
+}
+
+[data-theme='dark'] [class~='ring-brand-200'] {
+  --tw-ring-color: rgb(249 130 7 / 0.32);
+}
+
+[data-theme='dark'] [class~='ring-emerald-200'] {
+  --tw-ring-color: rgb(16 185 129 / 0.32);
+}
+
+[data-theme='dark'] [class~='ring-amber-200'] {
+  --tw-ring-color: rgb(245 158 11 / 0.34);
+}
+
+[data-theme='dark'] [class~='ring-red-200'],
+[data-theme='dark'] [class~='ring-red-400/40'] {
+  --tw-ring-color: rgb(248 113 113 / 0.34);
+}
+
+[data-theme='dark'] [class~='hover:ring-ink-300']:hover,
+[data-theme='dark'] [class~='hover:ring-ink-400']:hover {
+  --tw-ring-color: rgb(255 255 255 / 0.28);
+}
+
+[data-theme='dark'] [class~='focus:ring-ink-900']:focus {
+  --tw-ring-color: #f98207;
+}
+
+/* Formularios nativos */
+[data-theme='dark'] input::placeholder,
+[data-theme='dark'] textarea::placeholder {
+  color: #8b8175;
+}
+
+[data-theme='dark'] option {
+  background-color: #24201b;
+  color: var(--theme-text);
+}
+
+/* Mapa */
+[data-theme='dark'] .leaflet-container {
+  background: #24201b;
+}
+
+[data-theme='dark'] .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.82) contrast(0.9) saturate(0.65);
+}
+
+[data-theme='dark'] .leaflet-control-attribution {
+  background: rgb(20 18 15 / 0.82) !important;
+  color: #a99e90;
+}
+
+[data-theme='dark'] .leaflet-control-attribution a {
+  color: #ffb35c;
+}
+
+[data-theme='dark'] .leaflet-bar a {
+  background-color: #2f2a24;
+  border-bottom-color: #3b342c;
+  color: var(--theme-text);
+}
+
+[data-theme='dark'] .leaflet-bar a:hover {
+  background-color: #3a342d;
+}
+
+[data-theme='dark'] .leaflet-tooltip {
+  border-color: #3b342c;
+  background: #2f2a24;
+  color: var(--theme-text);
+}
+
+[data-theme='dark'] .leaflet-tooltip-top::before {
+  border-top-color: #2f2a24;
+}
+
+[data-theme='dark'] .leaflet-tooltip-bottom::before {
+  border-bottom-color: #2f2a24;
+}
+
+[data-theme='dark'] .leaflet-tooltip-left::before {
+  border-left-color: #2f2a24;
+}
+
+[data-theme='dark'] .leaflet-tooltip-right::before {
+  border-right-color: #2f2a24;
+}

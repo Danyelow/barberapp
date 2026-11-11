@@ -8,17 +8,21 @@ import {
   MapPin,
   Search,
   Sparkles,
+  Tag,
   X,
 } from 'lucide-react'
 import { api } from '../api/api'
 import { useAuth } from '../auth/AuthContext'
 import { BarbershopCard } from '../components/BarbershopCard'
+import { useProfilePreferences } from '../profile/ProfilePreferencesContext'
 import { useBookings } from '../store/BookingsContext'
-import { formatPrice, relativeDayLabel, toISODate } from '../lib/date'
-import { distanceKm, USER_LOCATION } from '../lib/geo'
+import { formatPrice, formatShortDate, relativeDayLabel, toISODate } from '../lib/date'
+import { distanceKm, formatDistance, USER_LOCATION } from '../lib/geo'
+import type { Coordinates } from '../lib/geo'
+import { nearbyOffers, sortShopsByProximity } from '../lib/offers'
 import { useUserLocation } from '../lib/useUserLocation'
 import { cn } from '../lib/cn'
-import { Avatar, EmptyState, Skeleton } from '../components/ui'
+import { Avatar, Badge, EmptyState, Skeleton } from '../components/ui'
 import type { Barbershop, ShopType } from '../data/barbershops'
 
 type ShopTypeFilter = 'todos' | ShopType
@@ -32,6 +36,7 @@ const shopTypeFilters: { id: ShopTypeFilter; label: string }[] = [
 
 export function DiscoverPage() {
   const { user } = useAuth()
+  const { photo } = useProfilePreferences()
   const { bookings } = useBookings()
   const { coords, status, request } = useUserLocation({ requestOnMount: true })
   const [shops, setShops] = useState<Barbershop[]>([])
@@ -67,14 +72,16 @@ export function DiscoverPage() {
 
   const visible = useMemo(() => {
     const from = coords ?? USER_LOCATION
-    return shops
-      .filter((shop) => shopType === 'todos' || shop.shopType === shopType)
-      .sort(
-        (a, b) =>
-          distanceKm(from.lat, from.lng, a.lat, a.lng) -
-          distanceKm(from.lat, from.lng, b.lat, b.lng),
-      )
+    return sortShopsByProximity(
+      shops.filter((shop) => shopType === 'todos' || shop.shopType === shopType),
+      from,
+    )
   }, [shops, shopType, coords])
+
+  const offersNearby = useMemo(() => {
+    const from = coords ?? USER_LOCATION
+    return nearbyOffers(visible, from).slice(0, 4)
+  }, [visible, coords])
 
   const locating = status === 'requesting'
   const typeLabel =
@@ -102,7 +109,7 @@ export function DiscoverPage() {
   return (
     <div className="pb-28">
       <header className="sticky top-0 z-30 border-b border-ink-200/60 bg-stone-50/90 backdrop-blur-xl safe-top">
-        <div className="flex items-center gap-3 px-4 pb-2 pt-3">
+        <div className="page-container flex items-center gap-3 px-4 pb-2 pt-3">
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand-600">BarberApp</p>
             <h1 className="mt-0.5 truncate text-xl font-extrabold tracking-tight text-ink-900">
@@ -110,11 +117,11 @@ export function DiscoverPage() {
             </h1>
           </div>
           <Link to="/perfil" aria-label="Ver perfil">
-            <Avatar name={user?.name ?? 'Invitado'} />
+            <Avatar name={user?.name ?? 'Invitado'} src={photo} />
           </Link>
         </div>
 
-        <div className="px-4 pb-3">
+        <div className="page-container px-4 pb-3">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-400" />
@@ -138,7 +145,7 @@ export function DiscoverPage() {
         </div>
       </header>
 
-      <div className="space-y-6 px-4 pt-4">
+      <div className="page-container space-y-6 px-4 pt-4">
         {nextBooking ? (
           <Link
             to="/citas"
@@ -215,6 +222,30 @@ export function DiscoverPage() {
           </div>
         </div>
 
+        {offersNearby.length ? (
+          <section className="space-y-3">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <h2 className="flex items-center gap-1.5 text-base font-bold text-ink-900">
+                  <Tag className="size-4 text-brand-600" aria-hidden />
+                  Ofertas cerca de ti
+                </h2>
+                <p className="text-xs text-ink-500">
+                  Descuentos activos a menos de 6 km, ordenados por cercanía
+                </p>
+              </div>
+              <Badge tone="warning">{offersNearby.length} activas</Badge>
+            </div>
+            <div className="-mx-4 overflow-x-auto px-4 pb-1 no-scrollbar">
+              <div className="flex gap-3">
+                {offersNearby.map((shop) => (
+                  <OfferCard key={shop.id} shop={shop} from={coords ?? USER_LOCATION} />
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         <section className="space-y-3">
           <div className="flex items-end justify-between gap-3">
             <div>
@@ -224,7 +255,7 @@ export function DiscoverPage() {
                   ? 'Buscando peluquerías…'
                   : locating
                     ? 'Buscando tu ubicación…'
-                    : `${visible.length} ${typeLabel} ${coords ? 'ordenadas por cercanía' : 'en Sevilla'}`}
+                    : `${visible.length} ${typeLabel} ${coords ? 'ordenadas por cercanía y ofertas' : 'en Sevilla'}`}
               </p>
             </div>
             <button
@@ -245,7 +276,7 @@ export function DiscoverPage() {
           </div>
 
           {loading ? (
-            <div className="space-y-4">
+            <div className="shop-grid">
               {[0, 1, 2].map((item) => (
                 <div key={item} className="overflow-hidden rounded-3xl bg-white ring-1 ring-ink-200/70">
                   <Skeleton className="h-40 rounded-none" />
@@ -257,7 +288,7 @@ export function DiscoverPage() {
               ))}
             </div>
           ) : visible.length ? (
-            <div className="space-y-4">
+            <div className="shop-grid">
               {visible.map((shop) => (
                 <BarbershopCard key={shop.id} shop={shop} location={coords} />
               ))}
@@ -314,5 +345,55 @@ export function DiscoverPage() {
         </section>
       </div>
     </div>
+  )
+}
+
+function OfferCard({ shop, from }: { shop: Barbershop; from: Coordinates }) {
+  const offer = shop.offer
+  if (!offer) return null
+  const distance = distanceKm(from.lat, from.lng, shop.lat, shop.lng)
+
+  return (
+    <Link
+      to={`/barberia/${shop.id}`}
+      className="group relative flex min-h-44 w-[280px] shrink-0 flex-col overflow-hidden rounded-3xl bg-ink-950 p-4 text-white shadow-lg ring-1 ring-ink-900/10 transition hover:-translate-y-0.5 hover:shadow-xl sm:w-[320px]"
+    >
+      <img
+        src={shop.cover}
+        alt=""
+        loading="lazy"
+        className="absolute inset-0 size-full object-cover opacity-30 transition duration-500 group-hover:scale-105 group-hover:opacity-40"
+        onError={(event) => {
+          event.currentTarget.style.display = 'none'
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-br from-ink-950/90 via-ink-950/65 to-brand-900/35" />
+
+      <div className="relative flex items-start justify-between gap-2">
+        <span className="inline-flex items-center gap-1 rounded-full bg-brand-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-950">
+          <Tag className="size-3" aria-hidden />
+          Oferta
+        </span>
+        <span className="grid size-11 place-items-center rounded-full bg-white/15 text-sm font-black text-brand-300 ring-1 ring-white/20 backdrop-blur">
+          -{offer.discountPercent}%
+        </span>
+      </div>
+
+      <div className="relative mt-3 flex-1">
+        <h3 className="text-base font-extrabold leading-tight">{shop.name}</h3>
+        <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-white/75">{offer.title}</p>
+      </div>
+
+      <div className="relative mt-3 flex items-end justify-between gap-2 text-[11px] text-white/65">
+        <span>
+          {formatDistance(distance)}
+          {offer.validUntil ? ` · hasta ${formatShortDate(offer.validUntil)}` : ''}
+        </span>
+        <span className="inline-flex items-center gap-1 font-semibold text-brand-300">
+          Ver oferta
+          <ArrowRight className="size-3.5" aria-hidden />
+        </span>
+      </div>
+    </Link>
   )
 }

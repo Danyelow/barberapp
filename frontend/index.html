@@ -9,7 +9,26 @@
       content="Encuentra barberías cerca de ti, consulta servicios y reserva cita con tu barbero favorito."
     />
     <meta name="theme-color" content="#1c1a17" />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      ;(() => {
+        try {
+          const stored = localStorage.getItem('barberapp.theme.v1')
+          const dark =
+            stored === 'dark' ||
+            (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          const theme = dark ? 'dark' : 'light'
+          document.documentElement.dataset.theme = theme
+          document.documentElement.style.colorScheme = theme
+          const meta = document.querySelector('meta[name="theme-color"]')
+          if (meta) meta.setAttribute('content', dark ? '#14120f' : '#f7f6f4')
+          const scheme = document.querySelector('meta[name="color-scheme"]')
+          if (scheme) scheme.setAttribute('content', theme)
+        } catch {
+          /* sin localStorage: se usa el tema claro */
+        }
+      })()
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="BarberApp" />

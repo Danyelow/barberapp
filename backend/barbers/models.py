@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.contrib.gis.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.utils import timezone
 
 
 class EmailUserManager(BaseUserManager):
@@ -201,3 +202,56 @@ class HaircutType(models.Model):
 
     def __str__(self):
         return f'{self.name} · {self.shop.name}'
+
+
+class Offer(models.Model):
+    """Oferta visible en la ficha de una peluquería.
+
+    Solo puede existir una oferta por peluquería. Para cambiarla, edita esta
+    ficha o desactívala y crea otra.
+    """
+
+    shop = models.OneToOneField(
+        BarberShop,
+        on_delete=models.CASCADE,
+        related_name='offer',
+        verbose_name='peluquería',
+    )
+    title = models.CharField(
+        'título',
+        max_length=120,
+        help_text='Ej.: 20 % en tu primer corte.',
+    )
+    description = models.TextField(
+        'descripción',
+        blank=True,
+        help_text='Condiciones breves que verá el cliente.',
+    )
+    discount_percent = models.PositiveSmallIntegerField(
+        'descuento (%)',
+        default=15,
+        validators=[MinValueValidator(5), MaxValueValidator(80)],
+    )
+    active = models.BooleanField('activa', default=True)
+    valid_until = models.DateField(
+        'válida hasta',
+        null=True,
+        blank=True,
+        help_text='Déjalo vacío si la oferta no caduca.',
+    )
+    created_at = models.DateTimeField('creada', auto_now_add=True)
+    updated_at = models.DateTimeField('actualizada', auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'oferta'
+        verbose_name_plural = 'ofertas'
+
+    def __str__(self):
+        return f'{self.title} · {self.shop.name}'
+
+    @property
+    def is_current(self):
+        if not self.active:
+            return False
+        return self.valid_until is None or self.valid_until >= timezone.localdate()

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Clock, MapPin } from 'lucide-react'
+import { Clock, MapPin, Tag } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { shopTypeShortLabel } from '../data/barbershops'
 import type { Barbershop } from '../data/barbershops'
@@ -40,13 +40,21 @@ export function BarbershopCard({
     >
       <Cover src={shop.cover} alt={`Interior de ${shop.name}`} name={shop.name} className="h-40">
         <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
-          <Badge tone={isOpen ? 'success' : 'neutral'} className="bg-white/90 backdrop-blur">
-            <span
-              className={`size-1.5 rounded-full ${isOpen ? 'bg-emerald-500 animate-dot' : 'bg-ink-400'}`}
-              aria-hidden
-            />
-            {isOpen ? 'Abierto ahora' : 'Cerrado hoy'}
-          </Badge>
+          <div className="flex flex-col items-start gap-1.5">
+            <Badge tone={isOpen ? 'success' : 'neutral'} className="bg-white/90 backdrop-blur">
+              <span
+                className={`size-1.5 rounded-full ${isOpen ? 'bg-emerald-500 animate-dot' : 'bg-ink-400'}`}
+                aria-hidden
+              />
+              {isOpen ? 'Abierto ahora' : 'Cerrado hoy'}
+            </Badge>
+            {shop.offer ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-brand-500 px-2.5 py-1 text-[11px] font-bold text-ink-950 shadow-sm">
+                <Tag className="size-3" aria-hidden />
+                Oferta -{shop.offer.discountPercent}%
+              </span>
+            ) : null}
+          </div>
           <span className="rounded-full bg-ink-950/70 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
             {formatDistance(distance)}
           </span>
@@ -67,6 +75,19 @@ export function BarbershopCard({
             Desde <strong className="text-sm font-bold text-ink-900">{formatPrice(minPrice)}</strong>
           </span>
         </div>
+        {shop.offer ? (
+          <div className="flex items-start gap-2 rounded-2xl bg-brand-50 px-3 py-2 ring-1 ring-brand-200">
+            <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-brand-500 text-ink-950">
+              <Tag className="size-3" aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[12px] font-bold text-brand-900">{shop.offer.title}</p>
+              <p className="mt-0.5 line-clamp-1 text-[11px] text-brand-700">
+                {shop.offer.description}
+              </p>
+            </div>
+          </div>
+        ) : null}
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-800 ring-1 ring-brand-200">
             {shopTypeShortLabel(shop.shopType)}

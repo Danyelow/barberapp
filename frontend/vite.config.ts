@@ -21,7 +21,7 @@ export default defineConfig({
         theme_color: '#1c1a17',
         background_color: '#f7f6f4',
         display: 'standalone',
-        orientation: 'portrait',
+        orientation: 'any',
         start_url: '/',
         scope: '/',
         categories: ['lifestyle', 'shopping'],

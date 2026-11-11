@@ -1,12 +1,13 @@
 from datetime import time, timedelta
 from decimal import Decimal
+import random
 import unicodedata
 
 from django.contrib.gis.geos import Point
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from barbers.models import Barber, BarberShop, HaircutType
+from barbers.models import Barber, BarberShop, HaircutType, Offer
 from clients.models import Client
 from reservations.models import Reservation
 
@@ -300,13 +301,35 @@ SHOPS = [
 ]
 
 
+# Plantillas por tipo de peluquería. El seed elige algunas al azar (con una
+# semilla fija para que el resultado sea reproducible) y las guarda en la BD.
+OFFER_TEMPLATES = {
+    'hombres': [
+        ('20 % en tu primer corte', 'Descuento válido de lunes a jueves. Preséntalo al llegar.', 20),
+        ('15 % en degradados', 'Incluye lavado y acabado. No acumulable con otras promociones.', 15),
+        ('10 % en corte y lavado', 'Reserva el corte con lavado y ahorra en el total.', 10),
+    ],
+    'mujeres': [
+        ('20 % en tu primer corte', 'Descuento válido de martes a jueves con cita previa.', 20),
+        ('15 % en color o mechas', 'Incluye diagnóstico previo del cabello. Sujeto a disponibilidad.', 15),
+        ('10 % en tratamientos', 'Hidratación o reparación capilar. No acumulable con otras ofertas.', 10),
+    ],
+    'unisex': [
+        ('15 % en cualquier corte', 'Válido para nuevos clientes de lunes a jueves.', 15),
+        ('20 % en color', 'Incluye lavado y peinado final. Con cita previa.', 20),
+        ('10 % en tu primera visita', 'Muéstralo al llegar a la peluquería.', 10),
+    ],
+}
+
+
 class Command(BaseCommand):
-    help = 'Crea las peluquerías, servicios, profesionales y cuentas de demostración de Sevilla.'
+    help = 'Crea las peluquerías, servicios, profesionales, ofertas y cuentas de demostración de Sevilla.'
 
     def handle(self, *args, **options):
         shops_created = 0
         services_created = 0
         barbers_created = 0
+        offers_created = 0
 
         for index, item in enumerate(SHOPS):
             shop, created = BarberShop.objects.update_or_create(
@@ -372,6 +395,24 @@ class Command(BaseCommand):
                     barber.save(update_fields=['password'])
                 barbers_created += int(barber_created)
 
+        # Solo se generan ofertas la primera vez. Así, si el administrador las
+        # cambia o las desactiva, volver a ejecutar seed_demo no las pisa.
+        if not Offer.objects.exists():
+            rng = random.Random(20261111)
+            demo_shops = list(
+                BarberShop.objects.filter(name__in=[item['name'] for item in SHOPS])
+            )
+            for shop in rng.sample(demo_shops, min(4, len(demo_shops))):
+                title, description, discount = rng.choice(OFFER_TEMPLATES[shop.shop_type])
+                Offer.objects.create(
+                    shop=shop,
+                    title=title,
+                    description=description,
+                    discount_percent=discount,
+                    valid_until=timezone.localdate() + timedelta(days=rng.randint(30, 60)),
+                )
+                offers_created += 1
+
         demo_client, _ = Client.objects.update_or_create(
             email='cliente@barberapp.dev',
             defaults={
@@ -417,10 +458,12 @@ class Command(BaseCommand):
                 'Datos de demo listos: '
                 f'{BarberShop.objects.count()} peluquerías, '
                 f'{HaircutType.objects.count()} servicios, '
+                f'{Offer.objects.count()} ofertas, '
                 f'{Barber.objects.count()} profesionales, '
                 f'{Reservation.objects.count()} reservas. '
                 f'Nuevos: {shops_created} peluquerías, {services_created} servicios, '
-                f'{barbers_created} profesionales, {reservations_created} reservas.'
+                f'{offers_created} ofertas, {barbers_created} profesionales, '
+                f'{reservations_created} reservas.'
             )
         )
         self.stdout.write('Cliente demo: cliente@barberapp.dev / 123456')

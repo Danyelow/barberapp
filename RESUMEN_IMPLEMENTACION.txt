@@ -1,0 +1,114 @@
+RESUMEN DE LOS ÚLTIMOS CAMBIOS
+================================
+
+1. OFERTAS EN PELUQUERÍAS
+-------------------------
+- Se ha añadido una oferta por peluquería en el backend de Django (título,
+  descripción, porcentaje de descuento, estado activo y fecha límite).
+- La API devuelve la oferta activa dentro de cada peluquería. Si la oferta está
+  desactivada o caducada, no se muestra.
+- Los datos de demostración crean ofertas en 4 de las 10 peluquerías de Sevilla
+  mediante una selección aleatoria reproducible. Volver a ejecutar seed_demo no
+  sobrescribe ofertas que hayas cambiado en el admin.
+- Las ofertas se ven en:
+  * Las tarjetas del inicio.
+  * Un bloque "Ofertas cerca de ti" cuando están a menos de 6 km.
+  * El mapa y la ficha de la peluquería.
+- Orden de las peluquerías: si una peluquería con oferta está a menos de 6 km,
+  recibe una ventaja de 1,5 km en el orden por cercanía. Así las ofertas cercanas
+  aparecen antes sin que una oferta lejana tape una peluquería que está al lado.
+- En Django Admin se pueden gestionar desde "Ofertas" o desde la propia ficha de
+  cada peluquería.
+
+2. VISTA PC Y VISTA MÓVIL
+-------------------------
+- La PWA sigue siendo mobile-first, pero ahora tiene una vista PC completa:
+  barra lateral de navegación, contenido más ancho, rejillas de tarjetas y
+  pantallas de acceso adaptadas.
+- El cambio de formato está en Perfil > Formato de pantalla:
+  Auto / PC / Móvil.
+- En la barra lateral y en las pantallas de acceso también hay un botón directo
+  para cambiar a vista móvil.
+- La preferencia se guarda en el navegador (localStorage) y se aplica al
+  instante. El modo Auto usa PC en pantallas de 1024 px o más y la vista PC
+  manual necesita al menos 768 px de ancho.
+- El manifiesto de la PWA permite cualquier orientación, pensando también en
+  navegadores de escritorio.
+
+3. TEMA OSCURO Y PERFIL PERSONALIZADO
+-------------------------------------
+- Se ha añadido un tema claro, oscuro y automático. Auto sigue la preferencia
+  del dispositivo. El cambio está en Perfil > Tema de la app, en la barra
+  lateral de la vista PC y en las pantallas de acceso.
+- La preferencia se guarda en localStorage (barberapp.theme.v1). Un script
+  inicial en index.html aplica el tema antes de cargar React para evitar el
+  destello de la versión clara.
+- En modo oscuro se adaptan las tarjetas, formularios, badges, bordes, la barra
+  lateral y el mapa (teselas y controles de Leaflet).
+- Cada cliente puede subir una foto de perfil. La imagen se recorta en cuadrado,
+  se reduce a 320 px y se comprime como JPEG antes de guardarla.
+- También puede elegir un servicio preferido entre los servicios reales de la
+  API, filtrados según su género (por ejemplo, una clienta no ve servicios de
+  barba).
+- Las recomendaciones de Perfil usan las peluquerías y servicios reales, se
+  ordenan por afinidad con el servicio elegido y después por distancia, y
+  respetan la restricción de servicios de barba.
+- La foto y el servicio preferido se guardan por usuario en localStorage
+  (barberapp.profile.v1). No se envían al servidor ni se escriben en la base de
+  datos. Si se borra el almacenamiento del navegador, se pierden.
+
+4. CÓMO COMPROBARLO
+-------------------
+- Arrancar backend:  backend\iniciar.bat   (API y Admin en el puerto 8000)
+- Arrancar frontend: frontend\iniciar.bat  (app en el puerto 5173)
+- Abrir:            http://localhost:5173
+- Admin:            http://localhost:8000/admin/
+- Iniciar sesión con una cuenta de demostración y probar:
+  * El bloque de ofertas del inicio y las insignias de descuento.
+  * El cambio Auto / PC / Móvil desde Perfil.
+  * El cambio Auto / Claro / Oscuro desde Perfil, la barra lateral o el acceso.
+  * La subida y eliminación de la foto de perfil.
+  * El cambio de servicio preferido y las recomendaciones cercanas.
+  * La ficha de una peluquería con oferta.
+  * Las ofertas en los marcadores del mapa y el mapa en tema oscuro.
+
+5. COMPROBACIONES TÉCNICAS
+--------------------------
+- Backend: migración 0005_offer aplicada y tests OK (14 tests).
+- Django: manage.py check sin incidencias.
+- Frontend: npm run build correcto (TypeScript + PWA).
+- Admin: listado de peluquerías, ofertas y formularios comprobados con respuesta
+  HTTP 200.
+- Chrome headless: tema oscuro comprobado en inicio, perfil, mapa, ficha, citas y
+  acceso, en vistas móvil y PC, sin superficies blancas grandes ni desbordamiento
+  horizontal.
+- Chrome headless: cambio de tema persistente, foto procesada a 320x320 JPEG,
+  foto guardada y eliminada, servicio preferido persistente y recomendaciones
+  actualizadas al cambiar de servicio.
+- Clienta de demo: 29 servicios disponibles para elegir, ninguno de barba, y 3
+  recomendaciones de "Corte femenino" ordenadas por distancia.
+
+6. ARCHIVOS PRINCIPALES
+-----------------------
+- backend/barbers/models.py          Modelo Offer.
+- backend/barbers/admin.py           Gestión de ofertas en el admin.
+- backend/api/serializers.py         Oferta incluida en el JSON de la API.
+- backend/api/management/commands/seed_demo.py  Ofertas de demostración.
+- frontend/src/lib/offers.ts         Orden por cercanía con ventaja de oferta.
+- frontend/src/layout/ViewModeContext.tsx        Preferencia PC / móvil.
+- frontend/src/theme/ThemeContext.tsx             Tema claro / oscuro / auto.
+- frontend/src/theme/ThemeToggle.tsx              Botón compartido de tema.
+- frontend/src/profile/ProfilePreferencesContext.tsx  Foto y servicio local.
+- frontend/src/lib/image.ts                      Recorte y compresión de foto.
+- frontend/src/lib/recommendations.ts            Afinidad y distancia.
+- frontend/src/components/RecommendationCard.tsx Recomendación de perfil.
+- frontend/src/components/MapView.tsx            Marcadores adaptados al tema.
+- frontend/src/components/AppShell.tsx           Barra lateral y layouts.
+- frontend/src/pages/DiscoverPage.tsx            Bloque de ofertas cercanas.
+- frontend/src/pages/ProfilePage.tsx             Perfil, tema y recomendaciones.
+- frontend/src/index.css                         Estilos del tema oscuro.
+
+Nota: no se ha modificado la base de datos ni se ha implementado la arquitectura
+multibase de BBDD.jpg porque el diagrama adjunto no se pudo interpretar. Los
+cambios están en el directorio de trabajo y no se han commiteado ni subido al
+repositorio.

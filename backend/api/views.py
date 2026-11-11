@@ -137,7 +137,8 @@ def logout_view(_request):
 def shops_view(request):
     query = str(request.query_params.get('q', '')).strip()
     shops = (
-        BarberShop.objects.prefetch_related('barbers', 'haircut_types')
+        BarberShop.objects.select_related('offer')
+        .prefetch_related('barbers', 'haircut_types')
         .all()
         .order_by('name')
     )
@@ -157,7 +158,7 @@ def shops_view(request):
 @api_view(['GET'])
 def shop_detail_view(_request, pk):
     shop = get_object_or_404(
-        BarberShop.objects.prefetch_related('barbers', 'haircut_types'),
+        BarberShop.objects.select_related('offer').prefetch_related('barbers', 'haircut_types'),
         pk=pk,
     )
     return Response(shop_payload(shop))

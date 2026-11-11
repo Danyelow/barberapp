@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.gis.admin import GISModelAdmin
 
-from .models import Barber, BarberShop, HaircutType
+from .models import Barber, BarberShop, HaircutType, Offer
 
 
 class HaircutTypeInline(admin.TabularInline):
@@ -12,15 +12,25 @@ class HaircutTypeInline(admin.TabularInline):
     verbose_name_plural = 'Servicios de la peluquería'
 
 
+class OfferInline(admin.StackedInline):
+    model = Offer
+    extra = 1
+    max_num = 1
+    fields = ('title', 'description', 'discount_percent', 'active', 'valid_until')
+    verbose_name = 'oferta'
+    verbose_name_plural = 'Oferta destacada'
+    classes = ('collapse',)
+
+
 @admin.register(BarberShop)
 class BarberShopAdmin(GISModelAdmin):
-    list_display = ('name', 'shop_type', 'city', 'address', 'opening_time', 'closing_time')
+    list_display = ('name', 'shop_type', 'city', 'address', 'offer_label', 'opening_time', 'closing_time')
     list_filter = ('shop_type', 'city', 'price_level')
     search_fields = ('name', 'address', 'city', 'tags')
     list_per_page = 20
     save_on_top = True
     readonly_fields = ('created_at', 'updated_at')
-    inlines = [HaircutTypeInline]
+    inlines = [HaircutTypeInline, OfferInline]
     fieldsets = (
         (
             'Datos de la peluquería',
@@ -73,6 +83,24 @@ class BarberShopAdmin(GISModelAdmin):
             'default_zoom': 12,
         }
     }
+
+    @admin.display(description='Oferta')
+    def offer_label(self, obj):
+        offer = getattr(obj, 'offer', None)
+        return offer.title if offer and offer.is_current else '—'
+
+
+@admin.register(Offer)
+class OfferAdmin(admin.ModelAdmin):
+    list_display = ('title', 'shop', 'discount_percent', 'active', 'valid_until')
+    list_filter = ('active', 'valid_until')
+    search_fields = ('title', 'description', 'shop__name')
+    list_select_related = ('shop',)
+    autocomplete_fields = ('shop',)
+    list_per_page = 20
+    save_on_top = True
+    date_hierarchy = 'valid_until'
+    readonly_fields = ('created_at', 'updated_at')
 
 
 @admin.register(Barber)
@@ -152,5 +180,5 @@ class HaircutTypeAdmin(admin.ModelAdmin):
 
 admin.site.site_header = 'BarberApp · Administración'
 admin.site.site_title = 'BarberApp'
-admin.site.index_title = 'Peluquerías, servicios, profesionales y reservas'
+admin.site.index_title = 'Peluquerías, servicios, ofertas, profesionales y reservas'
 admin.site.empty_value_display = '—'
