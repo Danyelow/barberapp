@@ -208,27 +208,20 @@ const initials = (name: string) =>
 
 export function Avatar({
   name,
-  src,
   size = 'md',
   className,
 }: {
   name: string
-  src?: string | null
   size?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
 }) {
   const tone = avatarTones[(name.charCodeAt(0) + name.length) % avatarTones.length]
-  const [failed, setFailed] = useState(false)
   const sizes = {
     sm: 'size-8 text-[11px]',
     md: 'size-10 text-sm',
     lg: 'size-14 text-lg',
     xl: 'size-20 text-2xl',
   }
-
-  useEffect(() => {
-    setFailed(false)
-  }, [src])
 
   return (
     <span
@@ -240,16 +233,7 @@ export function Avatar({
         className,
       )}
     >
-      {src && !failed ? (
-        <img
-          src={src}
-          alt=""
-          className="size-full object-cover"
-          onError={() => setFailed(true)}
-        />
-      ) : (
-        initials(name)
-      )}
+      {initials(name)}
     </span>
   )
 }

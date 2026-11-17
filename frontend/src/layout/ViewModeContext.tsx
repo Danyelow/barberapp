@@ -1,37 +1,19 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 
-export type ViewPreference = 'auto' | 'desktop' | 'mobile'
-
-const STORAGE_KEY = 'barberapp.view.v1'
 const AUTO_DESKTOP_QUERY = '(min-width: 1024px)'
 const DESKTOP_MIN_QUERY = '(min-width: 768px)'
-
-function readPreference(): ViewPreference {
-  try {
-    const value = localStorage.getItem(STORAGE_KEY)
-    if (value === 'desktop' || value === 'mobile') return value
-  } catch {
-    /* almacenamiento no disponible */
-  }
-  return 'auto'
-}
 
 const matches = (query: string) =>
   typeof window !== 'undefined' && window.matchMedia(query).matches
 
 type ViewModeContextValue = {
-  preference: ViewPreference
   isDesktop: boolean
-  setPreference: (value: ViewPreference) => void
-  useDesktop: () => void
-  useMobile: () => void
 }
 
 const ViewModeContext = createContext<ViewModeContextValue | null>(null)
 
 export function ViewModeProvider({ children }: { children: ReactNode }) {
-  const [preference, setPreferenceState] = useState<ViewPreference>(readPreference)
   const [autoDesktop, setAutoDesktop] = useState(() => matches(AUTO_DESKTOP_QUERY))
   const [canUseDesktop, setCanUseDesktop] = useState(() => matches(DESKTOP_MIN_QUERY))
 
@@ -51,32 +33,13 @@ export function ViewModeProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const isDesktop =
-    canUseDesktop && (preference === 'desktop' || (preference === 'auto' && autoDesktop))
+  const isDesktop = canUseDesktop && autoDesktop
 
   useEffect(() => {
     document.documentElement.dataset.view = isDesktop ? 'desktop' : 'mobile'
   }, [isDesktop])
 
-  const setPreference = useCallback((value: ViewPreference) => {
-    setPreferenceState(value)
-    try {
-      localStorage.setItem(STORAGE_KEY, value)
-    } catch {
-      /* almacenamiento no disponible */
-    }
-  }, [])
-
-  const value = useMemo(
-    () => ({
-      preference,
-      isDesktop,
-      setPreference,
-      useDesktop: () => setPreference('desktop'),
-      useMobile: () => setPreference('mobile'),
-    }),
-    [preference, isDesktop, setPreference],
-  )
+  const value = useMemo(() => ({ isDesktop }), [isDesktop])
 
   return <ViewModeContext.Provider value={value}>{children}</ViewModeContext.Provider>
 }

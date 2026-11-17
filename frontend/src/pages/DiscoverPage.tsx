@@ -14,7 +14,6 @@ import {
 import { api } from '../api/api'
 import { useAuth } from '../auth/AuthContext'
 import { BarbershopCard } from '../components/BarbershopCard'
-import { useProfilePreferences } from '../profile/ProfilePreferencesContext'
 import { useBookings } from '../store/BookingsContext'
 import { formatPrice, formatShortDate, relativeDayLabel, toISODate } from '../lib/date'
 import { distanceKm, formatDistance, USER_LOCATION } from '../lib/geo'
@@ -36,7 +35,6 @@ const shopTypeFilters: { id: ShopTypeFilter; label: string }[] = [
 
 export function DiscoverPage() {
   const { user } = useAuth()
-  const { photo } = useProfilePreferences()
   const { bookings } = useBookings()
   const { coords, status, request } = useUserLocation({ requestOnMount: true })
   const [shops, setShops] = useState<Barbershop[]>([])
@@ -117,7 +115,7 @@ export function DiscoverPage() {
             </h1>
           </div>
           <Link to="/perfil" aria-label="Ver perfil">
-            <Avatar name={user?.name ?? 'Invitado'} src={photo} />
+            <Avatar name={user?.name ?? 'Invitado'} />
           </Link>
         </div>
 

@@ -7,13 +7,11 @@ import {
   Home,
   Map,
   Monitor,
-  Smartphone,
   Sparkles,
   UserRound,
 } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { useViewMode } from '../layout/ViewModeContext'
-import { useProfilePreferences } from '../profile/ProfilePreferencesContext'
 import { ThemeToggle } from '../theme/ThemeToggle'
 import { cn } from '../lib/cn'
 import { Avatar } from './ui'
@@ -82,8 +80,6 @@ function BottomNav() {
 
 function DesktopSidebar() {
   const { user } = useAuth()
-  const { photo } = useProfilePreferences()
-  const { setPreference } = useViewMode()
   const items = useNavItems()
 
   return (
@@ -133,7 +129,7 @@ function DesktopSidebar() {
             to="/perfil"
             className="flex items-center gap-3 rounded-2xl border border-ink-200/80 bg-ink-50/70 p-2.5 transition hover:bg-ink-100"
           >
-            <Avatar name={user.name} src={photo} />
+            <Avatar name={user.name} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-semibold text-ink-900">{user.name}</span>
               <span className="block truncate text-[11px] text-ink-500">
@@ -144,18 +140,6 @@ function DesktopSidebar() {
         ) : null}
 
         <ThemeToggle showLabel />
-
-        <button
-          type="button"
-          onClick={() => setPreference('mobile')}
-          className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-xs font-semibold text-ink-500 transition hover:bg-ink-100 hover:text-ink-800"
-        >
-          <Smartphone className="size-4" aria-hidden />
-          Cambiar a vista móvil
-        </button>
-        <p className="px-2.5 text-[10px] leading-relaxed text-ink-400">
-          En Perfil puedes elegir entre vista automática, PC o móvil.
-        </p>
       </div>
     </aside>
   )
@@ -245,7 +229,7 @@ export function AppShell() {
 }
 
 export function AuthShell({ children }: { children: ReactNode }) {
-  const { isDesktop, setPreference } = useViewMode()
+  const { isDesktop } = useViewMode()
 
   if (isDesktop) {
     return (
@@ -281,14 +265,6 @@ export function AuthShell({ children }: { children: ReactNode }) {
                 minuto.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setPreference('mobile')}
-              className="relative inline-flex w-fit items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-xs font-semibold text-white/80 ring-1 ring-white/15 backdrop-blur transition hover:bg-white/15 hover:text-white"
-            >
-              <Smartphone className="size-4" aria-hidden />
-              Cambiar a vista móvil
-            </button>
           </aside>
 
           <div className="auth-content flex min-h-[calc(100dvh-2.5rem)] flex-col overflow-y-auto bg-stone-50 lg:min-h-[calc(100dvh-4rem)]">
